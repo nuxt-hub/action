@@ -1,23 +1,29 @@
-name: 'The name of your action here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: 'Deploy to NuxtHub'
+description: 'Deploy your Nuxt application to NuxtHub'
+author: 'NuxtHub'
 
-# Add your action's branding here. This will appear on the GitHub Marketplace.
 branding:
-  icon: 'heart'
-  color: 'red'
+  icon: 'upload-cloud'
+  color: 'green'
 
-# Define your inputs here.
 inputs:
-  milliseconds:
-    description: 'Your input description here'
-    required: true
-    default: '1000'
+  project-key:
+    description: 'The project key of the NuxtHub project to deploy to'
+    required: false
+  directory:
+    description: 'The directory of the built Nuxt application'
+    required: false
+    default: 'dist'
+  hub-url:
+    description: 'The URL of the NuxtHub dashboard'
+    required: false
+    default: 'https://admin.hub.nuxt.com'
 
-# Define your outputs here.
 outputs:
-  time:
-    description: 'Your output description here'
+  deployment-url:
+    description: 'The URL of the deployment'
+  primary-deployment-url:
+    description: 'The primary URL of the deployment'
 
 runs:
   using: node20

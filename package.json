@@ -1,21 +1,20 @@
 {
-  "name": "typescript-action",
-  "description": "GitHub Actions TypeScript template",
+  "name": "@nuxthub/action",
+  "description": "Deploy your Nuxt application to NuxtHub",
   "version": "0.0.0",
-  "author": "",
+  "author": "NuxtHub",
   "private": true,
-  "homepage": "https://github.com/actions/typescript-action",
+  "homepage": "https://github.com/nuxt-hub/action",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/actions/typescript-action.git"
+    "url": "git+https://github.com/nuxt-hub/action.git"
   },
   "bugs": {
-    "url": "https://github.com/actions/typescript-action/issues"
+    "url": "https://github.com/nuxt-hub/action/issues"
   },
   "keywords": [
     "actions",
-    "node",
-    "setup"
+    "nuxthub"
   ],
   "exports": {
     ".": "./dist/index.js"
@@ -67,7 +66,10 @@
     ]
   },
   "dependencies": {
-    "@actions/core": "^1.11.1"
+    "@actions/core": "^1.11.1",
+    "@actions/glob": "^0.5.0",
+    "@actions/http-client": "^2.2.3",
+    "mime": "^4.0.4"
   },
   "devDependencies": {
     "@github/local-action": "^2.1.2",
