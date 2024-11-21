@@ -5,7 +5,7 @@
       "name": "Debug Action",
       "type": "node",
       "request": "launch",
-      "runtimeExecutable": "npx",
+      "runtimeExecutable": "pnpx",
       "cwd": "${workspaceRoot}",
       "args": ["local-action", ".", "src/main.ts", ".env"],
       "console": "integratedTerminal",
