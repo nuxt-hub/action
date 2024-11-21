@@ -1,19 +1,19 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "NodeNext",
-    "rootDir": "./src",
-    "moduleResolution": "NodeNext",
-    "baseUrl": "./",
-    "sourceMap": true,
-    "outDir": "./dist",
-    "noImplicitAny": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "strict": true,
+    "esModuleInterop": false,
+    "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
-    "newLine": "lf"
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "strict": true,
+    "noImplicitAny": true,
+    "allowJs": true,
+    "noEmit": true,
+    "noUnusedLocals": true,
+    "resolveJsonModule": true,
+    "types": ["node"],
   },
-  "exclude": ["./dist", "./node_modules", "./__tests__", "./coverage"]
+  "include": ["src"]
 }

@@ -24,9 +24,9 @@ outputs:
     description: 'The environment of the deployment'
   deployment-url:
     description: 'The URL of the deployment'
-  primary-deployment-url:
-    description: 'The primary URL of the deployment'
+  branch-url:
+    description: 'The URL of the deployment branch'
 
 runs:
   using: node20
-  main: dist/index.js
+  main: dist/index.mjs

@@ -1,0 +1,51 @@
+diff --git a/dist/wasm/nodejs/blake3_js.js b/dist/wasm/nodejs/blake3_js.js
+index e655b33b4dc17fb39f8ae325b01a70de9c64579b..2074887166fc67b3fac204784a7a374b7b3d2ebd 100644
+--- a/dist/wasm/nodejs/blake3_js.js
++++ b/dist/wasm/nodejs/blake3_js.js
+@@ -1,7 +1,7 @@
+ let imports = {};
+ imports['__wbindgen_placeholder__'] = module.exports;
+ let wasm;
+-const { TextDecoder } = require(String.raw`util`);
++const { TextDecoder } = require('node:util');
+ 
+ let cachedTextDecoder = new TextDecoder('utf-8', { ignoreBOM: true, fatal: true });
+ 
+@@ -186,11 +186,10 @@ module.exports.__wbindgen_throw = function(arg0, arg1) {
+     throw new Error(getStringFromWasm0(arg0, arg1));
+ };
+ 
+-const path = require('path').join(__dirname, 'blake3_js_bg.wasm');
++const path = require('path').join(import.meta.dirname, 'blake3_js_bg.wasm');
+ const bytes = require('fs').readFileSync(path);
+ 
+ const wasmModule = new WebAssembly.Module(bytes);
+ const wasmInstance = new WebAssembly.Instance(wasmModule, imports);
+ wasm = wasmInstance.exports;
+ module.exports.__wasm = wasm;
+-
+diff --git a/esm/node/hash-instance.js b/esm/node/hash-instance.js
+index 4e08d4fc66d9460b0006447eb88f045bdf6e5308..b2839ac87ccfb73c4b8e9015e050a54eeb668eae 100644
+--- a/esm/node/hash-instance.js
++++ b/esm/node/hash-instance.js
+@@ -1,6 +1,6 @@
+ import { normalizeInput } from './hash-fn.js';
+ import { BaseHash } from '../base/index.js';
+-import { Transform } from 'stream.js';
++import { Transform } from 'node:stream';
+ import { getWasm } from './wasm.js';
+ import { NodeHashReader } from './hash-reader.js';
+ /**
+diff --git a/package.json b/package.json
+index eeeb80f4240f5925eb83d45543ce341e710169dd..1688869c42859a753b44a3c8e8b296be494f66b0 100644
+--- a/package.json
++++ b/package.json
+@@ -9,7 +9,7 @@
+     "webassembly",
+     "wasm"
+   ],
+-  "module": "./esm/index",
++  "module": "./esm/node/index",
+   "browser": "./esm/browser/index",
+   "main": "./dist/index",
+   "scripts": {
