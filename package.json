@@ -24,28 +24,30 @@
     "dist"
   ],
   "scripts": {
-    "bundle": "npm run format:write && npm run package",
-    "format:write": "npx prettier --write .",
-    "format:check": "npx prettier --check .",
-    "lint": "npx eslint . -c ./.github/linters/.eslintrc.yml",
-    "local-action": "npx local-action . src/main.ts .env",
-    "package": "npx ncc build src/index.ts -o dist --source-map --license licenses.txt",
-    "package:watch": "npm run package -- --watch",
-    "test": "npx jest",
-    "all": "npm run format:write && npm run lint && npm run test && npm run coverage && npm run package"
+    "bundle": "pnpm run lint:fix && pnpm run package",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "local-action": "local-action . src/main.ts .env",
+    "package": "unbuild"
   },
-  "dependencies": {
+  "devDependencies": {
     "@actions/core": "^1.11.1",
     "@actions/glob": "^0.5.0",
     "@actions/http-client": "^2.2.3",
     "@github/local-action": "^2.2.1",
-    "@nuxt/eslint-config": "^0.7.2",
-    "@types/node": "^22.10.1",
-    "eslint": "^9.16.0",
+    "@nuxt/eslint-config": "^0.7.1",
+    "@types/node": "^22.9.3",
+    "blake3-wasm": "2.1.5",
+    "eslint": "^9.15.0",
     "mime": "^4.0.4",
     "unbuild": "3.0.0-rc.11"
   },
   "engines": {
     "node": ">=20"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "blake3-wasm": "patches/blake3-wasm.patch"
+    }
   }
 }

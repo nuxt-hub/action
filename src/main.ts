@@ -1,23 +1,14 @@
+import { access, stat, readFile, readdir } from 'node:fs/promises'
+import { extname, join } from 'node:path'
 import * as core from '@actions/core'
 import * as glob from '@actions/glob'
 import * as httpClient from '@actions/http-client'
 import { hash as blake3hash } from 'blake3-wasm'
-import { access, stat, readFile, readdir } from 'node:fs/promises'
-import { extname, join } from 'node:path'
-import {
-  createMigrationsTable,
-  fetchRemoteMigrations,
-  queryDatabase
-} from './database'
+import mime from 'mime'
+import { createMigrationsTable, fetchRemoteMigrations, queryDatabase } from './database.js'
 
-/**
- * The main function for the action.
- * @returns {Promise<void>} Resolves when the action is complete.
- */
-export async function run(): Promise<void> {
+export async function run() {
   try {
-    const { default: mime } = await import('mime')
-
     const projectKeyInput = core.getInput('project-key')
     const directory = core.getInput('directory')
     const hubUrl = core.getInput('hub-url')
@@ -33,10 +24,10 @@ export async function run(): Promise<void> {
       ? new URL(`${hubUrl}/projects/${projectKeyInput}`).toString()
       : undefined
     const idToken = await core.getIDToken(audience)
-
     core.debug(`Got ID token`)
 
     // Get project info
+    console.log('Retrieving project information...')
     const http = new httpClient.HttpClient('nuxt-hub-action')
     const projectInfoResponse = await http.getJson<{
       accessToken: string
@@ -44,8 +35,8 @@ export async function run(): Promise<void> {
       projectSlug: string
       projectKey: string
       environment: 'production' | 'preview'
-    }>(`${hubUrl}/api/cicd/token`, {
-      authorization: `Bearer ${idToken}`
+    }>(`${hubUrl}/api/ci-cd/token`, {
+      authorization: `Bearer ${idToken}`,
     })
     if (!projectInfoResponse.result || projectInfoResponse.statusCode !== 200) {
       throw new Error('Project not found')
@@ -55,32 +46,33 @@ export async function run(): Promise<void> {
     core.setSecret(projectInfo.accessToken)
     core.debug(`Retrieved project info ${JSON.stringify(projectInfo)}`)
 
-    core.info(
-      `Deploying ${projectInfo.projectSlug} to ${projectInfo.environment} environment...`
-    )
+    core.info(`Deploying ${projectInfo.projectSlug} to ${projectInfo.environment} environment...`)
 
-    // Validate directory
+    // Validate directory exists
+    core.debug(`Checking directory ${directory} exists`)
     try {
       await access(directory)
-    } catch {
+    }
+    catch {
       throw new Error(`Directory ${directory} does not exist`)
     }
 
-    // Get files
+    // Determine files to deploy
+    core.debug(`Processing files in ${directory}`)
     const globber = await glob.create(`${directory}/**/*`, {
-      implicitDescendants: false
+      implicitDescendants: false,
     })
-    const files = await globber.glob().then(async files => {
+    const files = await globber.glob().then(async (files) => {
       const fileStats = await Promise.all(files.map(async file => stat(file)))
       return files.filter((file, index) => fileStats[index].isFile())
     })
 
-    const fileKeys = files.map(file => {
+    const fileKeys = files.map((file) => {
       const relativePath = file.replace(`${process.cwd()}/`, '')
       return relativePath.substring(directory.length + 1)
     })
 
-    const filesToDeploy = fileKeys.filter(fileKey => {
+    const filesToDeploy = fileKeys.filter((fileKey) => {
       if (fileKey.startsWith('.wrangler/')) return false
       if (fileKey.startsWith('node_modules/')) return false
       if (fileKey.startsWith('database/migrations/')) return false
@@ -88,27 +80,23 @@ export async function run(): Promise<void> {
       if (fileKey === '.dev.vars') return false
       return true
     })
-
     core.debug(`Files to deploy ${JSON.stringify(filesToDeploy)}`)
 
     if (!filesToDeploy.includes('hub.config.json')) {
-      throw new Error(
-        `${directory}/hub.config.json is missing, please make sure that @nuxthub/core is enabled in your nuxt.config.ts.`
-      )
+      throw new Error(`${directory}/hub.config.json is missing, please make sure that @nuxthub/core is enabled in your nuxt.config.ts.`)
     }
 
     // Prepare files for deployment
+    core.debug('Preparing files for deployment...')
     const deployFiles = await Promise.all(
-      filesToDeploy.map(async fileKey => {
+      filesToDeploy.map(async (fileKey) => {
         const filePath = `${process.cwd()}/${directory}/${fileKey}`
         const fileSize = (await stat(filePath)).size
         const content = await readFile(filePath)
         const contentBase64 = content.toString('base64')
 
         if (fileSize > MAX_ASSET_SIZE) {
-          throw new Error(
-            `NuxtHub deploy only supports files up to ${MAX_ASSET_SIZE} in size. ${filePath} is ${fileSize} in size.`
-          )
+          throw new Error(`NuxtHub deploy only supports files up to ${MAX_ASSET_SIZE} in size. ${filePath} is ${fileSize} in size.`)
         }
 
         return {
@@ -117,32 +105,36 @@ export async function run(): Promise<void> {
           value: contentBase64,
           base64: true,
           metadata: {
-            contentType: mime.getType(filePath) || 'application/octet-stream'
-          }
+            contentType: mime.getType(filePath) || 'application/octet-stream',
+          },
         }
-      })
+      }),
     )
 
     // Deploy
-    const deployment = await http.postJson<{
+    core.debug('Deploying to NuxtHub...')
+    interface Deployment {
       url: string
       primaryUrl: string
-    }>(
+      branchUrl: string
+    }
+    const deployment = await http.postJson<Deployment>(
       `${hubUrl}/api/teams/${projectInfo.teamSlug}/projects/${projectInfo.projectSlug}/deploy`,
       { files: deployFiles },
-      { authorization: `Bearer ${projectInfo.accessToken}` }
+      { authorization: `Bearer ${projectInfo.accessToken}` },
     )
-
     core.debug(`Deployment details ${JSON.stringify(deployment.result)}`)
 
     if (!deployment.result || deployment.statusCode !== 200) {
-      const result = deployment.result as any
+      const result = deployment.result as unknown
 
       if (result?.data?.name === 'ZodError') {
         throw new Error(JSON.stringify(result.data.issues))
-      } else if (result?.message?.includes('Error: ')) {
+      }
+      else if (result?.message?.includes('Error: ')) {
         throw new Error(result.message.split('Error: ')[1])
-      } else if (result?.message) {
+      }
+      else if (result?.message) {
         throw new Error(result.message.split(' - ')[1] || result.message)
       }
 
@@ -150,12 +142,10 @@ export async function run(): Promise<void> {
     }
 
     // Set outputs
-    core.setOutput('deployment-url', deployment.result.url)
-    core.setOutput('primary-deployment-url', deployment.result.primaryUrl)
+    core.setOutput('deployment-url', deployment.result.primaryUrl)
+    core.setOutput('branch-url', deployment.result.branchUrl)
     core.setOutput('environment', projectInfo.environment)
-    core.info(
-      `Deployed to ${projectInfo.environment}: ${deployment.result.url ?? deployment.result.primaryUrl}`
-    )
+    core.info(`Deployed to ${projectInfo.environment}: ${deployment.result.url ?? deployment.result.primaryUrl}`)
 
     // Apply migrations
     const hubConfigPath = join(process.cwd(), directory, 'hub.config.json')
@@ -163,11 +153,8 @@ export async function run(): Promise<void> {
       database?: boolean
     }
 
-    // debug log if database not enabled
     if (!hubConfig.database) {
-      core.debug(
-        'Skipping database migrations - database not enabled in config'
-      )
+      core.debug('Skipping database migrations - database not enabled in config')
     }
 
     if (hubConfig.database) {
@@ -176,18 +163,20 @@ export async function run(): Promise<void> {
       const deployEnv = projectInfo.environment
       const migrationsDir = join(process.cwd(), 'server/database/migrations')
 
+      core.debug('Creating migrations table if non-existent...')
       await createMigrationsTable({
         hubUrl,
         projectKey,
         accessToken: projectInfo.accessToken,
-        env: deployEnv
+        env: deployEnv,
       })
 
+      core.debug('Fetching remote migrations...')
       const remoteMigrations = await fetchRemoteMigrations({
         hubUrl,
         projectKey,
         accessToken: projectInfo.accessToken,
-        env: deployEnv
+        env: deployEnv,
       })
       core.info(`Found ${remoteMigrations.length} existing migrations`)
 
@@ -196,7 +185,7 @@ export async function run(): Promise<void> {
         .map(file => file.replace('.sql', ''))
 
       const pendingMigrations = localMigrations.filter(
-        localName => !remoteMigrations.find(({ name }) => name === localName)
+        localName => !remoteMigrations.find(({ name }) => name === localName),
       )
 
       if (!pendingMigrations.length) {
@@ -208,7 +197,7 @@ export async function run(): Promise<void> {
 
         let query = await readFile(
           join(migrationsDir, `${migration}.sql`),
-          'utf-8'
+          'utf-8',
         )
 
         if (query.at(-1) !== ';') query += ';'
@@ -220,28 +209,29 @@ export async function run(): Promise<void> {
             projectKey,
             accessToken: projectInfo.accessToken,
             env: deployEnv,
-            query
+            query,
           })
           core.info(`Successfully applied migration ${migration}`)
-        } catch (error: any) {
+        }
+        catch (error) {
           const errorMessage = error?.response?._data?.message || error?.message
           // Add GitHub error annotation to the migration file
           core.error(errorMessage as string, {
             file: join('server/database/migrations', `${migration}.sql`),
-            title: 'Migration failed'
+            title: 'Migration failed',
           })
-          throw new Error(
-            `Failed to apply migration ${migration}: ${errorMessage}`
-          )
+          throw new Error(`Failed to apply migration ${migration}: ${errorMessage}`)
         }
+        core.info('Migrations applied successfully')
       }
     }
-  } catch (error) {
+  }
+  catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
   }
 }
 
-export function hashFile(filepath: string, base64: string) {
+function hashFile(filepath: string, base64: string) {
   const extension = extname(filepath).substring(1)
 
   return blake3hash(base64 + extension)

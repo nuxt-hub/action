@@ -11,11 +11,11 @@ export async function queryDatabase(options: {
   const response = await http.postJson(
     `${options.hubUrl}/api/projects/${options.projectKey}/database/${options.env}/query`,
     { query: options.query },
-    { authorization: `Bearer ${options.accessToken}` }
+    { authorization: `Bearer ${options.accessToken}` },
   )
   if (response.statusCode !== 200) {
     throw new Error(
-      `Failed to query database: HTTP ${response.statusCode} ${response.result}`
+      `Failed to query database: HTTP ${response.statusCode} ${response.result}`,
     )
   }
   return response.result
@@ -41,16 +41,17 @@ export async function fetchRemoteMigrations(options: {
   projectKey: string
   accessToken: string
   env: string
-}): Promise<{ id: number; name: string; applied_at: string }[]> {
-  const query =
-    'select "id", "name", "applied_at" from "_hub_migrations" order by "_hub_migrations"."id"'
+}): Promise<{ id: number, name: string, applied_at: string }[]> {
+  const query
+    = 'select "id", "name", "applied_at" from "_hub_migrations" order by "_hub_migrations"."id"'
   try {
     const res = (await queryDatabase({ ...options, query })) as {
-      results: { id: number; name: string; applied_at: string }[]
+      results: { id: number, name: string, applied_at: string }[]
     }[]
 
     return res[0]?.results ?? []
-  } catch (error: any) {
+  }
+  catch (error) {
     if (error?.response?._data?.message?.includes('no such table')) {
       return []
     }
