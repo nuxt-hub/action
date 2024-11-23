@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   lint:
-    name: TypeScript Tests
+    name: Lint
     runs-on: ubuntu-latest
 
     steps:
@@ -30,5 +30,47 @@ jobs:
           node-version: 'lts/*'
           cache: 'pnpm'
 
+      - name: Install dependencies
+        run: pnpm install
+
       - name: Lint
         run: pnpm run lint
+
+  test-action:
+    name: GitHub Actions Test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Create testing app
+        run: pnpx nuxi init testing-app -t hub --package-manager pnpm --git-init false
+
+      - name: Build site
+        run: NITRO_PRESET=cloudflare_pages pnpm run build
+        working-directory: ./testing-app
+
+      - name: Test local action
+        id: test-action
+        uses: ./
+        with:
+          hub-url: ${{ secrets.HUB_URL }}
+          directory: testing-app/dist
+
+      - name: Print output
+        id: output
+        run: echo "${{ steps.test-action.outputs.deployment-url }} - ${{ steps.test-action.outputs.environment }}"

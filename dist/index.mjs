@@ -30130,7 +30130,7 @@ async function run() {
     coreExports.debug(`Got ID token`);
     console.log("Retrieving project information...");
     const http = new libExports.HttpClient("nuxt-hub-action");
-    const projectInfoResponse = await http.getJson(`${hubUrl}/api/ci-cd/token`, {
+    const projectInfoResponse = await http.getJson(`${hubUrl}/api/cicd/token`, {
       authorization: `Bearer ${idToken}`
     });
     if (!projectInfoResponse.result || projectInfoResponse.statusCode !== 200) {
@@ -30281,5 +30281,7 @@ function hashFile(filepath, base64) {
   const extension = extname(filepath).substring(1);
   return hash(base64 + extension).toString("hex").slice(0, 32);
 }
+
+run();
 
 run();
