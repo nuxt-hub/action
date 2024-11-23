@@ -10,8 +10,7 @@ Automatically deploy your Nuxt app to NuxtHub using GitHub Actions ☁️🚀
 ```yaml
 # .github/workflows/nuxt-hub.yml
 name: Deploy to NuxtHub
-on:
-  - push
+on: push
 
 jobs:
   deploy:
@@ -37,16 +36,32 @@ jobs:
         run: pnpm install
 
       - name: Build site
-        run: NITRO_PRESET=cloudflare_pages pnpm run build
+        run: pnpm run build
 
       - name: Deploy to NuxtHub
         uses: nuxt-hub/action@v1
-        id: nuxt-hub-deploy
-
-      - name: Print Output
-        id: output
-        run: echo "${{ steps.nuxt-hub-deploy.outputs.deployment-url }}"
 ```
+
+## 🧾 Outputs
+
+This action provides the following outputs that you can use in subsequent workflow steps:
+
+- **`environment`**
+  The environment of the deployment (e.g. production, preview).
+
+- **`deployment-url`**
+  The URL of the deployment. For preview environments, it links to the deployment of the commit.
+
+  Examples:
+  - https://example.nuxt.dev (main)
+  - https://abcdefg.example.pages.dev (feat/example)
+
+- **`branch-url`**
+  The permanent URL for the current branch deployment.
+
+  Examples:
+  - https://example.nuxt.dev (main)
+  - https://feat-example.example.pages.dev (feat/example)
 
 ## 💚 Contributing
 
@@ -70,7 +85,7 @@ pnpm run bundle
    > It will run [`unbuild`](https://github.com/unjs/unbuild)
    > to build the final JavaScript action code with all dependencies included.
 
-1. (Optional) Test your action locally
+1. (Optional) Test the action locally
 
    The [`@github/local-action`](https://github.com/github/local-action) utility
    can be used to test your action locally. It is a simple command-line tool
@@ -88,8 +103,8 @@ pnpm run bundle
    - Terminal/Command Prompt
 
      ```bash
-     # pnpx local-action <action-yaml-path> <entrypoint> <dotenv-file>
-     pnpx local-action . src/main.ts .env
+     # pnpm local-action <action-yaml-path> <entrypoint> <dotenv-file>
+     pnpm local-action . src/main.ts .env
      ```
 
    You can provide a `.env` file to the `local-action` CLI to set environment

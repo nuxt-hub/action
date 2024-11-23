@@ -23,7 +23,7 @@ outputs:
   environment:
     description: 'The environment of the deployment'
   deployment-url:
-    description: 'The URL of the deployment'
+    description: 'The URL of the deployment - preview environments link to the specific deployment of the commit'
   branch-url:
     description: 'The URL of the deployment branch'
 
