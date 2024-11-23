@@ -81,7 +81,7 @@ function requireUtils$1 () {
 	    };
 	}
 	utils$1.toCommandProperties = toCommandProperties;
-	
+
 	return utils$1;
 }
 
@@ -184,7 +184,7 @@ function requireCommand () {
 	        .replace(/:/g, '%3A')
 	        .replace(/,/g, '%2C');
 	}
-	
+
 	return command;
 }
 
@@ -255,7 +255,7 @@ function requireFileCommand () {
 	    return `${key}<<${delimiter}${os.EOL}${convertedValue}${os.EOL}${delimiter}`;
 	}
 	fileCommand.prepareKeyValueMessage = prepareKeyValueMessage;
-	
+
 	return fileCommand;
 }
 
@@ -363,7 +363,7 @@ function requireProxy () {
 	        return this._decodedPassword;
 	    }
 	}
-	
+
 	return proxy;
 }
 
@@ -8204,7 +8204,7 @@ function requireUtils () {
 	    return res;
 	}
 	utils.enumToMap = enumToMap;
-	
+
 	return utils;
 }
 
@@ -8484,7 +8484,7 @@ function requireConstants$2 () {
 		    'transfer-encoding': HEADER_STATE.TRANSFER_ENCODING,
 		    'upgrade': HEADER_STATE.UPGRADE,
 		};
-		
+
 	} (constants$2));
 	return constants$2;
 }
@@ -24996,7 +24996,7 @@ function requireLib () {
 	}
 	lib.HttpClient = HttpClient;
 	const lowercaseKeys = (obj) => Object.keys(obj).reduce((c, k) => ((c[k.toLowerCase()] = obj[k]), c), {});
-	
+
 	return lib;
 }
 
@@ -25086,7 +25086,7 @@ function requireAuth () {
 	    }
 	}
 	auth.PersonalAccessTokenCredentialHandler = PersonalAccessTokenCredentialHandler;
-	
+
 	return auth;
 }
 
@@ -25138,8 +25138,8 @@ function requireOidcUtils () {
 	            const res = yield httpclient
 	                .getJson(id_token_url)
 	                .catch(error => {
-	                throw new Error(`Failed to get ID Token. \n 
-        Error Code : ${error.statusCode}\n 
+	                throw new Error(`Failed to get ID Token. \n
+        Error Code : ${error.statusCode}\n
         Error Message: ${error.message}`);
 	            });
 	            const id_token = (_a = res.result) === null || _a === void 0 ? void 0 : _a.value;
@@ -25170,7 +25170,7 @@ function requireOidcUtils () {
 	    }
 	}
 	oidcUtils.OidcClient = OidcClient;
-	
+
 	return oidcUtils;
 }
 
@@ -25463,7 +25463,7 @@ function requireSummary () {
 		 */
 		exports.markdownSummary = _summary;
 		exports.summary = _summary;
-		
+
 	} (summary));
 	return summary;
 }
@@ -25535,7 +25535,7 @@ function requirePathUtils () {
 	    return pth.replace(/[/\\]/g, path.sep);
 	}
 	pathUtils.toPlatformPath = toPlatformPath;
-	
+
 	return pathUtils;
 }
 
@@ -25736,7 +25736,7 @@ function requireIoUtil () {
 		    return (_a = process.env['COMSPEC']) !== null && _a !== void 0 ? _a : `cmd.exe`;
 		}
 		exports.getCmdPath = getCmdPath;
-		
+
 	} (ioUtil));
 	return ioUtil;
 }
@@ -26043,7 +26043,7 @@ function requireIo () {
 	        }
 	    });
 	}
-	
+
 	return io;
 }
 
@@ -26668,7 +26668,7 @@ function requireToolrunner () {
 	        state._setResult();
 	    }
 	}
-	
+
 	return toolrunner;
 }
 
@@ -26778,7 +26778,7 @@ function requireExec () {
 	    });
 	}
 	exec.getExecOutput = getExecOutput;
-	
+
 	return exec;
 }
 
@@ -26880,7 +26880,7 @@ function requirePlatform () {
 		    });
 		}
 		exports.getDetails = getDetails;
-		
+
 	} (platform));
 	return platform;
 }
@@ -27233,7 +27233,7 @@ function requireCore () {
 		 * Platform utilities exports
 		 */
 		exports.platform = __importStar(requirePlatform());
-		
+
 	} (core));
 	return core;
 }
@@ -27313,7 +27313,7 @@ function requireInternalGlobOptionsHelper () {
 	    return result;
 	}
 	internalGlobOptionsHelper.getOptions = getOptions;
-	
+
 	return internalGlobOptionsHelper;
 }
 
@@ -27524,7 +27524,7 @@ function requireInternalPathHelper () {
 	    return p.substr(0, p.length - 1);
 	}
 	internalPathHelper.safeTrimTrailingSeparator = safeTrimTrailingSeparator;
-	
+
 	return internalPathHelper;
 }
 
@@ -27551,7 +27551,7 @@ function requireInternalMatchKind () {
 	    /** Matched */
 	    MatchKind[MatchKind["All"] = 3] = "All";
 	})(MatchKind || (internalMatchKind.MatchKind = MatchKind = {}));
-	
+
 	return internalMatchKind;
 }
 
@@ -27656,7 +27656,7 @@ function requireInternalPatternHelper () {
 	    return patterns.some(x => !x.negate && x.partialMatch(itemPath));
 	}
 	internalPatternHelper.partialMatch = partialMatch;
-	
+
 	return internalPatternHelper;
 }
 
@@ -29037,7 +29037,7 @@ function requireInternalPath () {
 	    }
 	}
 	internalPath.Path = Path;
-	
+
 	return internalPath;
 }
 
@@ -29303,7 +29303,7 @@ function requireInternalPattern () {
 	    }
 	}
 	internalPattern.Pattern = Pattern;
-	
+
 	return internalPattern;
 }
 
@@ -29323,7 +29323,7 @@ function requireInternalSearchState () {
 	    }
 	}
 	internalSearchState.SearchState = SearchState;
-	
+
 	return internalSearchState;
 }
 
@@ -29575,7 +29575,7 @@ function requireInternalGlobber () {
 	    }
 	}
 	internalGlobber.DefaultGlobber = DefaultGlobber;
-	
+
 	return internalGlobber;
 }
 
@@ -29687,7 +29687,7 @@ function requireInternalHashFiles () {
 	    });
 	}
 	internalHashFiles.hashFiles = hashFiles;
-	
+
 	return internalHashFiles;
 }
 
@@ -29740,7 +29740,7 @@ function requireGlob () {
 	    });
 	}
 	glob.hashFiles = hashFiles;
-	
+
 	return glob;
 }
 
@@ -29960,7 +29960,7 @@ function requireBlake3_js () {
 		const wasmModule = new WebAssembly.Module(bytes);
 		const wasmInstance = new WebAssembly.Instance(wasmModule, imports);
 		wasm = wasmInstance.exports;
-		module.exports.__wasm = wasm; 
+		module.exports.__wasm = wasm;
 	} (blake3_js));
 	return blake3_js.exports;
 }
@@ -30116,164 +30116,166 @@ async function fetchRemoteMigrations(options) {
   }
 }
 
-try {
-  const projectKeyInput = coreExports.getInput("project-key");
-  const directory = coreExports.getInput("directory");
-  const hubUrl = coreExports.getInput("hub-url");
-  const MAX_ASSET_SIZE = 25 * 1024 * 1024;
-  if (projectKeyInput) coreExports.debug(`Linked with: ${projectKeyInput}`);
-  coreExports.debug(`Nuxt output directory: ${directory}`);
-  coreExports.debug(`NuxtHub URL: ${hubUrl}`);
-  const audience = projectKeyInput ? new URL(`${hubUrl}/projects/${projectKeyInput}`).toString() : void 0;
-  const idToken = await coreExports.getIDToken(audience);
-  coreExports.debug(`Got ID token`);
-  console.log("Retrieving project information...");
-  const http = new libExports.HttpClient("nuxt-hub-action");
-  const projectInfoResponse = await http.getJson(`${hubUrl}/api/cicd/token`, {
-    authorization: `Bearer ${idToken}`
-  });
-  if (!projectInfoResponse.result || projectInfoResponse.statusCode !== 200) {
-    throw new Error("Project not found");
-  }
-  const projectInfo = projectInfoResponse.result;
-  const projectKey = projectInfo.projectKey;
-  coreExports.setSecret(projectInfo.accessToken);
-  coreExports.debug(`Retrieved project info ${JSON.stringify(projectInfo)}`);
-  coreExports.info(`Deploying ${projectInfo.projectSlug} to ${projectInfo.environment} environment...`);
-  coreExports.debug(`Checking directory ${directory} exists`);
+async function run() {
   try {
-    await access(directory);
-  } catch {
-    throw new Error(`Directory ${directory} does not exist`);
-  }
-  coreExports.debug(`Processing files in ${directory}`);
-  const globber = await globExports.create(`${directory}/**/*`, {
-    implicitDescendants: false
-  });
-  const files = await globber.glob().then(async (files2) => {
-    const fileStats = await Promise.all(files2.map(async (file) => stat(file)));
-    return files2.filter((file, index) => fileStats[index].isFile());
-  });
-  const fileKeys = files.map((file) => {
-    const relativePath = file.replace(`${process.cwd()}/`, "");
-    return relativePath.substring(directory.length + 1);
-  });
-  const filesToDeploy = fileKeys.filter((fileKey) => {
-    if (fileKey.startsWith(".wrangler/")) return false;
-    if (fileKey.startsWith("node_modules/")) return false;
-    if (fileKey.startsWith("database/migrations/")) return false;
-    if (fileKey === "wrangler.toml") return false;
-    if (fileKey === ".dev.vars") return false;
-    return true;
-  });
-  coreExports.debug(`Files to deploy ${JSON.stringify(filesToDeploy)}`);
-  if (!filesToDeploy.includes("hub.config.json")) {
-    throw new Error(`${directory}/hub.config.json is missing, please make sure that @nuxthub/core is enabled in your nuxt.config.ts.`);
-  }
-  coreExports.debug("Preparing files for deployment...");
-  const deployFiles = await Promise.all(
-    filesToDeploy.map(async (fileKey) => {
-      const filePath = `${process.cwd()}/${directory}/${fileKey}`;
-      const fileSize = (await stat(filePath)).size;
-      const content = await readFile(filePath);
-      const contentBase64 = content.toString("base64");
-      if (fileSize > MAX_ASSET_SIZE) {
-        throw new Error(`NuxtHub deploy only supports files up to ${MAX_ASSET_SIZE} in size. ${filePath} is ${fileSize} in size.`);
-      }
-      return {
-        path: `/${fileKey}`,
-        key: hashFile(filePath, contentBase64),
-        value: contentBase64,
-        base64: true,
-        metadata: {
-          contentType: mime.getType(filePath) || "application/octet-stream"
+    const projectKeyInput = coreExports.getInput("project-key");
+    const directory = coreExports.getInput("directory");
+    const hubUrl = coreExports.getInput("hub-url");
+    const MAX_ASSET_SIZE = 25 * 1024 * 1024;
+    if (projectKeyInput) coreExports.debug(`Linked with: ${projectKeyInput}`);
+    coreExports.debug(`Nuxt output directory: ${directory}`);
+    coreExports.debug(`NuxtHub URL: ${hubUrl}`);
+    const audience = projectKeyInput ? new URL(`${hubUrl}/projects/${projectKeyInput}`).toString() : void 0;
+    const idToken = await coreExports.getIDToken(audience);
+    coreExports.debug(`Got ID token`);
+    console.log("Retrieving project information...");
+    const http = new libExports.HttpClient("nuxt-hub-action");
+    const projectInfoResponse = await http.getJson(`${hubUrl}/api/ci-cd/token`, {
+      authorization: `Bearer ${idToken}`
+    });
+    if (!projectInfoResponse.result || projectInfoResponse.statusCode !== 200) {
+      throw new Error("Project not found");
+    }
+    const projectInfo = projectInfoResponse.result;
+    const projectKey = projectInfo.projectKey;
+    coreExports.setSecret(projectInfo.accessToken);
+    coreExports.debug(`Retrieved project info ${JSON.stringify(projectInfo)}`);
+    coreExports.info(`Deploying ${projectInfo.projectSlug} to ${projectInfo.environment} environment...`);
+    coreExports.debug(`Checking directory ${directory} exists`);
+    try {
+      await access(directory);
+    } catch {
+      throw new Error(`Directory ${directory} does not exist`);
+    }
+    coreExports.debug(`Processing files in ${directory}`);
+    const globber = await globExports.create(`${directory}/**/*`, {
+      implicitDescendants: false
+    });
+    const files = await globber.glob().then(async (files2) => {
+      const fileStats = await Promise.all(files2.map(async (file) => stat(file)));
+      return files2.filter((file, index) => fileStats[index].isFile());
+    });
+    const fileKeys = files.map((file) => {
+      const relativePath = file.replace(`${process.cwd()}/`, "");
+      return relativePath.substring(directory.length + 1);
+    });
+    const filesToDeploy = fileKeys.filter((fileKey) => {
+      if (fileKey.startsWith(".wrangler/")) return false;
+      if (fileKey.startsWith("node_modules/")) return false;
+      if (fileKey.startsWith("database/migrations/")) return false;
+      if (fileKey === "wrangler.toml") return false;
+      if (fileKey === ".dev.vars") return false;
+      return true;
+    });
+    coreExports.debug(`Files to deploy ${JSON.stringify(filesToDeploy)}`);
+    if (!filesToDeploy.includes("hub.config.json")) {
+      throw new Error(`${directory}/hub.config.json is missing, please make sure that @nuxthub/core is enabled in your nuxt.config.ts.`);
+    }
+    coreExports.debug("Preparing files for deployment...");
+    const deployFiles = await Promise.all(
+      filesToDeploy.map(async (fileKey) => {
+        const filePath = `${process.cwd()}/${directory}/${fileKey}`;
+        const fileSize = (await stat(filePath)).size;
+        const content = await readFile(filePath);
+        const contentBase64 = content.toString("base64");
+        if (fileSize > MAX_ASSET_SIZE) {
+          throw new Error(`NuxtHub deploy only supports files up to ${MAX_ASSET_SIZE} in size. ${filePath} is ${fileSize} in size.`);
         }
-      };
-    })
-  );
-  coreExports.debug("Deploying to NuxtHub...");
-  const deployment = await http.postJson(
-    `${hubUrl}/api/teams/${projectInfo.teamSlug}/projects/${projectInfo.projectSlug}/deploy`,
-    { files: deployFiles },
-    { authorization: `Bearer ${projectInfo.accessToken}` }
-  );
-  coreExports.debug(`Deployment details ${JSON.stringify(deployment.result)}`);
-  if (!deployment.result || deployment.statusCode !== 200) {
-    const result = deployment.result;
-    if (result?.data?.name === "ZodError") {
-      throw new Error(JSON.stringify(result.data.issues));
-    } else if (result?.message?.includes("Error: ")) {
-      throw new Error(result.message.split("Error: ")[1]);
-    } else if (result?.message) {
-      throw new Error(result.message.split(" - ")[1] || result.message);
-    }
-    throw new Error("Deployment failed");
-  }
-  coreExports.setOutput("deployment-url", deployment.result.primaryUrl);
-  coreExports.setOutput("branch-url", deployment.result.branchUrl);
-  coreExports.setOutput("environment", projectInfo.environment);
-  coreExports.info(`Deployed to ${projectInfo.environment}: ${deployment.result.url ?? deployment.result.primaryUrl}`);
-  const hubConfigPath = join(process.cwd(), directory, "hub.config.json");
-  const hubConfig = JSON.parse(await readFile(hubConfigPath, "utf-8"));
-  if (!hubConfig.database) {
-    coreExports.debug("Skipping database migrations - database not enabled in config");
-  }
-  if (hubConfig.database) {
-    coreExports.info("Processing database migrations...");
-    const deployEnv = projectInfo.environment;
-    const migrationsDir = join(process.cwd(), "server/database/migrations");
-    coreExports.debug("Creating migrations table if non-existent...");
-    await createMigrationsTable({
-      hubUrl,
-      projectKey,
-      accessToken: projectInfo.accessToken,
-      env: deployEnv
-    });
-    coreExports.debug("Fetching remote migrations...");
-    const remoteMigrations = await fetchRemoteMigrations({
-      hubUrl,
-      projectKey,
-      accessToken: projectInfo.accessToken,
-      env: deployEnv
-    });
-    coreExports.info(`Found ${remoteMigrations.length} existing migrations`);
-    const localMigrations = (await readdir(migrationsDir)).filter((file) => file.endsWith(".sql")).map((file) => file.replace(".sql", ""));
-    const pendingMigrations = localMigrations.filter(
-      (localName) => !remoteMigrations.find(({ name }) => name === localName)
+        return {
+          path: `/${fileKey}`,
+          key: hashFile(filePath, contentBase64),
+          value: contentBase64,
+          base64: true,
+          metadata: {
+            contentType: mime.getType(filePath) || "application/octet-stream"
+          }
+        };
+      })
     );
-    if (!pendingMigrations.length) {
-      coreExports.info("No pending migrations to apply");
-    }
-    for (const migration of pendingMigrations) {
-      coreExports.info(`Applying migration ${migration}...`);
-      let query = await readFile(
-        join(migrationsDir, `${migration}.sql`),
-        "utf-8"
-      );
-      if (query.at(-1) !== ";") query += ";";
-      query += `INSERT INTO _hub_migrations (name) values ('${migration}');`;
-      try {
-        await queryDatabase({
-          hubUrl,
-          projectKey,
-          accessToken: projectInfo.accessToken,
-          env: deployEnv,
-          query
-        });
-        coreExports.info(`Successfully applied migration ${migration}`);
-      } catch (error) {
-        const errorMessage = error?.response?._data?.message || error?.message;
-        coreExports.error(errorMessage, {
-          file: join("server/database/migrations", `${migration}.sql`),
-          title: "Migration failed"
-        });
-        throw new Error(`Failed to apply migration ${migration}: ${errorMessage}`);
+    coreExports.debug("Deploying to NuxtHub...");
+    const deployment = await http.postJson(
+      `${hubUrl}/api/teams/${projectInfo.teamSlug}/projects/${projectInfo.projectSlug}/deploy`,
+      { files: deployFiles },
+      { authorization: `Bearer ${projectInfo.accessToken}` }
+    );
+    coreExports.debug(`Deployment details ${JSON.stringify(deployment.result)}`);
+    if (!deployment.result || deployment.statusCode !== 200) {
+      const result = deployment.result;
+      if (result?.data?.name === "ZodError") {
+        throw new Error(JSON.stringify(result.data.issues));
+      } else if (result?.message?.includes("Error: ")) {
+        throw new Error(result.message.split("Error: ")[1]);
+      } else if (result?.message) {
+        throw new Error(result.message.split(" - ")[1] || result.message);
       }
-      coreExports.info("Migrations applied successfully");
+      throw new Error("Deployment failed");
     }
+    coreExports.setOutput("deployment-url", deployment.result.primaryUrl);
+    coreExports.setOutput("branch-url", deployment.result.branchUrl);
+    coreExports.setOutput("environment", projectInfo.environment);
+    coreExports.info(`Deployed to ${projectInfo.environment}: ${deployment.result.url ?? deployment.result.primaryUrl}`);
+    const hubConfigPath = join(process.cwd(), directory, "hub.config.json");
+    const hubConfig = JSON.parse(await readFile(hubConfigPath, "utf-8"));
+    if (!hubConfig.database) {
+      coreExports.debug("Skipping database migrations - database not enabled in config");
+    }
+    if (hubConfig.database) {
+      coreExports.info("Processing database migrations...");
+      const deployEnv = projectInfo.environment;
+      const migrationsDir = join(process.cwd(), "server/database/migrations");
+      coreExports.debug("Creating migrations table if non-existent...");
+      await createMigrationsTable({
+        hubUrl,
+        projectKey,
+        accessToken: projectInfo.accessToken,
+        env: deployEnv
+      });
+      coreExports.debug("Fetching remote migrations...");
+      const remoteMigrations = await fetchRemoteMigrations({
+        hubUrl,
+        projectKey,
+        accessToken: projectInfo.accessToken,
+        env: deployEnv
+      });
+      coreExports.info(`Found ${remoteMigrations.length} existing migrations`);
+      const localMigrations = (await readdir(migrationsDir)).filter((file) => file.endsWith(".sql")).map((file) => file.replace(".sql", ""));
+      const pendingMigrations = localMigrations.filter(
+        (localName) => !remoteMigrations.find(({ name }) => name === localName)
+      );
+      if (!pendingMigrations.length) {
+        coreExports.info("No pending migrations to apply");
+      }
+      for (const migration of pendingMigrations) {
+        coreExports.info(`Applying migration ${migration}...`);
+        let query = await readFile(
+          join(migrationsDir, `${migration}.sql`),
+          "utf-8"
+        );
+        if (query.at(-1) !== ";") query += ";";
+        query += `INSERT INTO _hub_migrations (name) values ('${migration}');`;
+        try {
+          await queryDatabase({
+            hubUrl,
+            projectKey,
+            accessToken: projectInfo.accessToken,
+            env: deployEnv,
+            query
+          });
+          coreExports.info(`Successfully applied migration ${migration}`);
+        } catch (error) {
+          const errorMessage = error?.response?._data?.message || error?.message;
+          coreExports.error(errorMessage, {
+            file: join("server/database/migrations", `${migration}.sql`),
+            title: "Migration failed"
+          });
+          throw new Error(`Failed to apply migration ${migration}: ${errorMessage}`);
+        }
+        coreExports.info("Migrations applied successfully");
+      }
+    }
+  } catch (error) {
+    if (error instanceof Error) coreExports.setFailed(error.message);
   }
-} catch (error) {
-  if (error instanceof Error) coreExports.setFailed(error.message);
 }
 function hashFile(filepath, base64) {
   const extension = extname(filepath).substring(1);
