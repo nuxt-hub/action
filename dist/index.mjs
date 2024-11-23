@@ -30281,3 +30281,5 @@ function hashFile(filepath, base64) {
   const extension = extname(filepath).substring(1);
   return hash(base64 + extension).toString("hex").slice(0, 32);
 }
+
+run();
