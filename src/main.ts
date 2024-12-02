@@ -1,9 +1,9 @@
 import { access, stat, readFile, readdir } from 'node:fs/promises'
 import { extname, join } from 'node:path'
+import { createHash } from 'node:crypto'
 import * as core from '@actions/core'
 import * as glob from '@actions/glob'
 import * as httpClient from '@actions/http-client'
-import { hash as blake3hash } from 'blake3-wasm'
 import mime from 'mime'
 import { createMigrationsTable, fetchRemoteMigrations, queryDatabase } from './database.js'
 
@@ -234,7 +234,8 @@ export async function run() {
 function hashFile(filepath: string, base64: string) {
   const extension = extname(filepath).substring(1)
 
-  return blake3hash(base64 + extension)
-    .toString('hex')
+  return createHash('md5')
+    .update(base64 + extension)
+    .digest('hex')
     .slice(0, 32)
 }

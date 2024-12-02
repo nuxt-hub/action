@@ -12,19 +12,5 @@ export default defineBuildConfig({
       exportConditions: ['production', 'node'] as any,
     },
   },
-  entries: [
-    'src/index',
-    {
-      builder: 'copy',
-      pattern: '*.wasm',
-      input: 'node_modules/blake3-wasm/dist/wasm/nodejs',
-      outDir: 'dist',
-    },
-  ],
-  externals: [
-    'node:fs/promises',
-    'node:path',
-    'node:util',
-    'node:stream',
-  ],
+  entries: ['src/index'],
 })
