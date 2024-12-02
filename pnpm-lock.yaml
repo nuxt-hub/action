@@ -4,11 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-patchedDependencies:
-  blake3-wasm:
-    hash: n4sdmbazo4ien6kueui7aq3pyu
-    path: patches/blake3-wasm.patch
-
 importers:
 
   .:
@@ -31,9 +26,6 @@ importers:
       '@types/node':
         specifier: ^22.9.3
         version: 22.9.3
-      blake3-wasm:
-        specifier: 2.1.5
-        version: 2.1.5(patch_hash=n4sdmbazo4ien6kueui7aq3pyu)
       eslint:
         specifier: ^9.15.0
         version: 9.15.0(jiti@2.4.0)
@@ -867,9 +859,6 @@ packages:
 
   before-after-hook@3.0.2:
     resolution: {integrity: sha512-Nik3Sc0ncrMK4UUdXQmAnRtzmNQTAAXmXIopizwZ1W1t8QmfJj+zL4OA2I7XPTPW5z5TDqv4hRo/JzouDJnX3A==}
-
-  blake3-wasm@2.1.5:
-    resolution: {integrity: sha512-F1+K8EbfOZE49dtoPtmxUQrpXaBIl3ICvasLh+nJta0xkz+9kF/7uet9fLnwKqhDrmj6g+6K3Tw9yQPUg2ka5g==}
 
   boolbase@1.0.0:
     resolution: {integrity: sha512-JZOSA7Mo9sNGB8+UjSgzdLtokWAky1zbztM3WRLCbZ70/3cTANmQmOdR7y2g+J0e2WXywy1yS468tY+IruqEww==}
@@ -2821,8 +2810,6 @@ snapshots:
   balanced-match@1.0.2: {}
 
   before-after-hook@3.0.2: {}
-
-  blake3-wasm@2.1.5(patch_hash=n4sdmbazo4ien6kueui7aq3pyu): {}
 
   boolbase@1.0.0: {}
 

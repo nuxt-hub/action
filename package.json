@@ -37,17 +37,11 @@
     "@github/local-action": "^2.2.1",
     "@nuxt/eslint-config": "^0.7.1",
     "@types/node": "^22.9.3",
-    "blake3-wasm": "2.1.5",
     "eslint": "^9.15.0",
     "mime": "^4.0.4",
     "unbuild": "3.0.0-rc.11"
   },
   "engines": {
     "node": ">=20"
-  },
-  "pnpm": {
-    "patchedDependencies": {
-      "blake3-wasm": "patches/blake3-wasm.patch"
-    }
   }
 }
