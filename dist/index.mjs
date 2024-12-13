@@ -29983,6 +29983,12 @@ async function run() {
       coreExports.info("Processing database migrations...");
       const deployEnv = projectInfo.environment;
       const migrationsDir = join(process.cwd(), "server/database/migrations");
+      try {
+        await access(migrationsDir);
+      } catch {
+        coreExports.info(`Skipping database migrations - ${migrationsDir} does not exist`);
+        return;
+      }
       coreExports.debug("Creating migrations table if non-existent...");
       await createMigrationsTable({
         hubUrl,

@@ -163,6 +163,14 @@ export async function run() {
       const deployEnv = projectInfo.environment
       const migrationsDir = join(process.cwd(), 'server/database/migrations')
 
+      try {
+        await access(migrationsDir)
+      }
+      catch {
+        core.info(`Skipping database migrations - ${migrationsDir} does not exist`)
+        return
+      }
+
       core.debug('Creating migrations table if non-existent...')
       await createMigrationsTable({
         hubUrl,
