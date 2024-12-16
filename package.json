@@ -37,9 +37,9 @@
     "@github/local-action": "^2.2.1",
     "@nuxt/eslint-config": "^0.7.3",
     "@types/node": "^22.10.2",
-    "eslint": "^9.16.0",
+    "eslint": "^9.17.0",
     "mime": "^4.0.4",
-    "unbuild": "3.0.0-rc.11"
+    "unbuild": "3.0.1"
   },
   "engines": {
     "node": ">=20"
