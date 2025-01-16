@@ -31,7 +31,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -43,6 +43,16 @@ jobs:
       - name: Deploy to NuxtHub
         uses: nuxt-hub/action@v1
 ```
+
+## ⚙️ Inputs
+
+The following input parameters can be provided to the GitHub Action. Learn more about [workflow syntax for GitHub Actions](https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#jobsjob_idstepswith) on GitHub's documentation.
+
+- **`directory`**
+  The directory of the built Nuxt application. Defaults to `dist`.
+
+- **`project-key`**
+  The project key of the NuxtHub project to deploy to. If the repository is linked to more than one project, project key is required.
 
 ## 🧾 Outputs
 
