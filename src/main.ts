@@ -153,16 +153,8 @@ export async function run() {
       core.info('Processing database migrations...')
 
       const localMigrations = fileKeys
-        .filter(fileKey => {
-          const isMigrationsDir = fileKey.startsWith('database:migrations:')
-          const isSqlFile = fileKey.endsWith('.sql')
-          return isMigrationsDir && isSqlFile
-        })
-        .map(fileName => {
-          return fileName
-            .replace('database:migrations:', '')
-            .replace('.sql', '')
-        })
+        .filter(fileKey => fileKey.startsWith('database:migrations:') && fileKey.endsWith('.sql'))
+        .map(fileKey => fileKey.replace('database:migrations:', '').replace('.sql', ''))
       const pendingMigrations = localMigrations.filter(localName => !remoteMigrations.find(({ name }) => name === localName))
       if (!pendingMigrations.length) {
         core.info('No pending migrations to apply.')
@@ -173,7 +165,7 @@ export async function run() {
       await createMigrationsTable({
         hubUrl,
         projectKey,
-        accessToken: projectInfo.accessToken,
+        token: projectInfo.accessToken,
         env: projectInfo.environment,
       })
 
@@ -181,13 +173,13 @@ export async function run() {
       const remoteMigrations = await fetchRemoteMigrations({
         hubUrl,
         projectKey,
-        accessToken: projectInfo.accessToken,
+        token: projectInfo.accessToken,
         env: projectInfo.environment,
       })
-      core.info(`Found ${remoteMigrations.length} migration${remoteMigrations.length === 1 ? '' : 's'}`)
+      core.info(`Found ${remoteMigrations.length} database migration${remoteMigrations.length === 1 ? '' : 's'}`)
 
       for (const migration of pendingMigrations) {
-        core.info(`Applying migration ${colors.blueBright(migration)}`)
+        core.info(`Applying database migration ${colors.blueBright(migration)}`)
 
         let query = await storage.getItem(`database/migrations/${migration}.sql`)
 
@@ -198,22 +190,53 @@ export async function run() {
           await queryDatabase({
             hubUrl,
             projectKey,
-            accessToken: projectInfo.accessToken,
+            token: projectInfo.accessToken,
             env: projectInfo.environment,
             query,
           })
-          core.info(`Successfully applied migration ${migration}`)
+          core.info(`Successfully applied database migration ${migration}`)
         }
         catch (error) {
           const errorMessage = error?.response?._data?.message || error?.message
           core.error(errorMessage as string, {
             file: join('server/database/migrations', `${migration}.sql`),
-            title: 'Migration failed',
+            title: 'Database migration failed',
           })
-          throw new Error(`Failed to apply migration ${migration}: ${errorMessage}`)
+          throw new Error(`Failed to apply database migration ${migration}: ${errorMessage}`)
         }
-        core.info('Migrations applied successfully')
+        core.info('Database migrations applied successfully')
       }
+    }
+    // #endregion
+    // #region Database queries
+    const localQueries = fileKeys
+      .filter(fileKey => fileKey.startsWith('database:queries:') && fileKey.endsWith('.sql'))
+      .map(fileKey => fileKey.replace('database:queries:', '').replace('.sql', ''))
+
+    if (localQueries.length) {
+      core.info(`Applying ${colors.blueBright(formatNumber(localQueries.length))} database queries...`)
+      for (const queryName of localQueries) {
+        const query = await storage.getItem(`database/queries/${queryName}.sql`)
+
+        try {
+          await queryDatabase({
+            hubUrl,
+            projectKey,
+            token: projectInfo.accessToken,
+            env: projectInfo.environment,
+            query
+          })
+        } catch (error) {
+          const errorMessage = error?.response?._data?.message || error?.message
+          core.error(errorMessage as string, {
+            file: join('server/database/queries', `${queryName}.sql`),
+            title: 'Database query failed',
+          })
+          throw new Error(`Failed to apply database query ${queryName}: ${errorMessage}`)
+        }
+
+      }
+      core.info(`Applied ${colors.blueBright(formatNumber(localQueries.length))} database queries.`)
     }
     // #endregion
   }

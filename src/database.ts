@@ -1,15 +1,16 @@
 import { ofetch } from 'ofetch'
+import { CreateDatabaseMigrationsTableQuery, ListDatabaseMigrationsQuery } from 'nuxthub/internal'
 
 export async function queryDatabase(options: {
   hubUrl: string
   projectKey: string
-  accessToken: string
+  token: string
   env: string
   query: string
 }) {
   return await ofetch(`${options.hubUrl}/api/projects/${options.projectKey}/database/${options.env}/query`, {
     headers: {
-      authorization: `Bearer ${options.accessToken}`
+      authorization: `Bearer ${options.token}`
     },
     body: {
       query: options.query
@@ -19,31 +20,23 @@ export async function queryDatabase(options: {
   })
 }
 
-const CreateMigrationsTableQuery = `CREATE TABLE IF NOT EXISTS _hub_migrations (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    name       TEXT UNIQUE,
-    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
-);`
-
 export async function createMigrationsTable(options: {
   hubUrl: string
   projectKey: string
-  accessToken: string
+  token: string
   env: string
 }) {
-  await queryDatabase({ ...options, query: CreateMigrationsTableQuery })
+  await queryDatabase({ ...options, query: CreateDatabaseMigrationsTableQuery })
 }
 
 export async function fetchRemoteMigrations(options: {
   hubUrl: string
   projectKey: string
-  accessToken: string
+  token: string
   env: string
 }): Promise<{ id: number, name: string, applied_at: string }[]> {
-  const query
-    = 'select "id", "name", "applied_at" from "_hub_migrations" order by "_hub_migrations"."id"'
   try {
-    const res = (await queryDatabase({ ...options, query })) as {
+    const res = (await queryDatabase({ ...options, query: ListDatabaseMigrationsQuery })) as {
       results: { id: number, name: string, applied_at: string }[]
     }[]
 
