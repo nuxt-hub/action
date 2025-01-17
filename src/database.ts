@@ -1,4 +1,4 @@
-import * as httpClient from '@actions/http-client'
+import { ofetch } from 'ofetch'
 
 export async function queryDatabase(options: {
   hubUrl: string
@@ -7,18 +7,16 @@ export async function queryDatabase(options: {
   env: string
   query: string
 }) {
-  const http = new httpClient.HttpClient('nuxt-hub-action')
-  const response = await http.postJson(
-    `${options.hubUrl}/api/projects/${options.projectKey}/database/${options.env}/query`,
-    { query: options.query },
-    { authorization: `Bearer ${options.accessToken}` },
-  )
-  if (response.statusCode !== 200) {
-    throw new Error(
-      `Failed to query database: HTTP ${response.statusCode} ${response.result}`,
-    )
-  }
-  return response.result
+  return await ofetch(`${options.hubUrl}/api/projects/${options.projectKey}/database/${options.env}/query`, {
+    headers: {
+      authorization: `Bearer ${options.accessToken}`
+    },
+    body: {
+      query: options.query
+    }
+  }).catch((error) => {
+    throw new Error(`Failed to query database: ${error.message}`)
+  })
 }
 
 const CreateMigrationsTableQuery = `CREATE TABLE IF NOT EXISTS _hub_migrations (
