@@ -46361,7 +46361,7 @@ async function run() {
         coreExports.debug(`Skipping database queries - no database queries found in ${colors$1.blueBright(`${directory}/database/queries`)}`);
       }
       if (localQueries.length) {
-        coreExports.info(`Applying ${colors$1.blueBright(formatNumber(localQueries.length))} database queries...`);
+        coreExports.info(`Applying ${colors$1.blueBright(formatNumber(localQueries.length))} database ${localQueries.length === 1 ? "query" : "queries"}...`);
         for (const queryName of localQueries) {
           const query = await storage.getItem(`database/queries/${queryName}.sql`);
           coreExports.debug(`Applying database query ${colors$1.blueBright(queryName)}...`);
@@ -46384,7 +46384,7 @@ async function run() {
             throw new Error(`Failed to apply database query ${queryName}: ${errorMessage}`);
           }
         }
-        coreExports.info(`${colors$1.blueBright(formatNumber(localQueries.length))} database queries applied`);
+        coreExports.info(`${colors$1.blueBright(formatNumber(localQueries.length))} database ${localQueries.length === 1 ? "query" : "queries"} applied`);
       }
     }
     coreExports.debug(`Publishing deployment...`);

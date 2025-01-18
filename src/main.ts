@@ -205,7 +205,7 @@ export async function run() {
       }
 
       if (localQueries.length) {
-        core.info(`Applying ${colors.blueBright(formatNumber(localQueries.length))} database queries...`)
+        core.info(`Applying ${colors.blueBright(formatNumber(localQueries.length))} database ${localQueries.length === 1 ? 'query' : 'queries'}...`)
         for (const queryName of localQueries) {
           const query = await storage.getItem(`database/queries/${queryName}.sql`)
 
@@ -231,7 +231,7 @@ export async function run() {
           }
 
         }
-        core.info(`${colors.blueBright(formatNumber(localQueries.length))} database queries applied`)
+        core.info(`${colors.blueBright(formatNumber(localQueries.length))} database ${localQueries.length === 1 ? 'query' : 'queries'} applied`)
       }
       // #endregion
     }
