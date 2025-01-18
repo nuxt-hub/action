@@ -46251,63 +46251,26 @@ async function run() {
     const pathsToDeploy = getPathsToDeploy(fileKeys);
     const config = await storage.getItem("hub.config.json");
     const { format: formatNumber } = new Intl.NumberFormat("en-US");
-    try {
-      const publicFiles = await getPublicFiles(storage, pathsToDeploy);
-      coreExports.debug("Preparing deployment...");
-      const deploymentInfo = await $api(`/teams/${projectInfo.teamSlug}/projects/${projectInfo.projectSlug}/${projectInfo.environment}/deploy/prepare`, {
-        method: "POST",
-        body: {
-          config,
-          /**
-           * Public manifest is a map of file paths to their unique hash (SHA256 sliced to 32 characters).
-           * @example
-           * {
-           *   "/index.html": "hash",
-           *   "/assets/image.png": "hash"
-           * }
-           */
-          publicManifest: publicFiles.reduce((acc, file) => {
-            acc[file.path] = file.hash;
-            return acc;
-          }, {})
-        }
-      });
-      const { deploymentKey, missingPublicHashes, cloudflareUploadJwt } = deploymentInfo;
-      const publicFilesToUpload = publicFiles.filter((file) => missingPublicHashes.includes(file.hash));
-      coreExports.debug("Uploading assets to Cloudflare...");
-      if (publicFilesToUpload.length) {
-        const totalSizeToUpload = publicFilesToUpload.reduce((acc, file) => acc + file.size, 0);
-        coreExports.debug(`Uploading ${colors$1.blueBright(formatNumber(publicFilesToUpload.length))} new static assets (${colors$1.blueBright(prettyBytes(totalSizeToUpload))})...`);
-        await uploadAssetsToCloudflare(publicFilesToUpload, cloudflareUploadJwt, ({ progressSize, totalSize }) => {
-          const percentage = Math.round(progressSize / totalSize * 100);
-          coreExports.debug(`${percentage}% uploaded (${prettyBytes(progressSize)}/${prettyBytes(totalSize)})`);
-        });
-        coreExports.info(`${colors$1.blueBright(formatNumber(publicFilesToUpload.length))} new static assets uploaded (${colors$1.blueBright(prettyBytes(totalSizeToUpload))})`);
+    const publicFiles = await getPublicFiles(storage, pathsToDeploy);
+    coreExports.debug("Preparing deployment...");
+    const deploymentInfo = await $api(`/teams/${projectInfo.teamSlug}/projects/${projectInfo.projectSlug}/${projectInfo.environment}/deploy/prepare`, {
+      method: "POST",
+      body: {
+        config,
+        /**
+         * Public manifest is a map of file paths to their unique hash (SHA256 sliced to 32 characters).
+         * @example
+         * {
+         *   "/index.html": "hash",
+         *   "/assets/image.png": "hash"
+         * }
+         */
+        publicManifest: publicFiles.reduce((acc, file) => {
+          acc[file.path] = file.hash;
+          return acc;
+        }, {})
       }
-      if (publicFiles.length) {
-        const totalSize = publicFiles.reduce((acc, file) => acc + file.size, 0);
-        const totalGzipSize = publicFiles.reduce((acc, file) => acc + file.gzipSize, 0);
-        coreExports.info(`${colors$1.blueBright(formatNumber(publicFiles.length))} static assets (${colors$1.blueBright(prettyBytes(totalSize))} / ${colors$1.blueBright(prettyBytes(totalGzipSize))} gzip)`);
-      }
-      const metaFiles = await Promise.all(pathsToDeploy.filter(isMetaPath).map((p) => getFile(storage, p, "base64")));
-      const serverFiles = await Promise.all(pathsToDeploy.filter(isServerPath).map((p) => getFile(storage, p, "base64")));
-      const serverFilesSize = serverFiles.reduce((acc, file) => acc + file.size, 0);
-      const serverFilesGzipSize = serverFiles.reduce((acc, file) => acc + file.gzipSize, 0);
-      coreExports.info(`${colors$1.blueBright(formatNumber(serverFiles.length))} server files (${colors$1.blueBright(prettyBytes(serverFilesSize))} / ${colors$1.blueBright(prettyBytes(serverFilesGzipSize))} gzip)`);
-      const deployment = await $api(`/teams/${projectInfo.teamSlug}/projects/${projectInfo.projectSlug}/${projectInfo.environment}/deploy/complete`, {
-        method: "POST",
-        body: {
-          deploymentKey,
-          serverFiles,
-          metaFiles
-        }
-      });
-      coreExports.debug(`Deployment details ${JSON.stringify(deployment)}`);
-      coreExports.setOutput("deployment-url", deployment.primaryUrl);
-      coreExports.setOutput("branch-url", deployment.branchUrl);
-      coreExports.setOutput("environment", projectInfo.environment);
-      coreExports.info(`Deployed to ${projectInfo.environment}: ${deployment.url ?? deployment.primaryUrl}`);
-    } catch (err) {
+    }).catch((err) => {
       if (err.data?.data?.name === "ZodError") {
         throw new Error(err.data.data.issues);
       } else if (err.message.includes("Error: ")) {
@@ -46315,64 +46278,132 @@ async function run() {
       } else {
         throw new Error(err.message.split(" - ")[1] || err.message);
       }
+    });
+    const { deploymentKey, missingPublicHashes, cloudflareUploadJwt } = deploymentInfo;
+    const publicFilesToUpload = publicFiles.filter((file) => missingPublicHashes.includes(file.hash));
+    coreExports.debug("Uploading assets to Cloudflare...");
+    if (publicFilesToUpload.length) {
+      const totalSizeToUpload = publicFilesToUpload.reduce((acc, file) => acc + file.size, 0);
+      coreExports.debug(`Uploading ${colors$1.blueBright(formatNumber(publicFilesToUpload.length))} new static assets (${colors$1.blueBright(prettyBytes(totalSizeToUpload))})...`);
+      await uploadAssetsToCloudflare(publicFilesToUpload, cloudflareUploadJwt, ({ progressSize, totalSize }) => {
+        const percentage = Math.round(progressSize / totalSize * 100);
+        coreExports.debug(`${percentage}% uploaded (${prettyBytes(progressSize)}/${prettyBytes(totalSize)})`);
+      });
+      coreExports.info(`${colors$1.blueBright(formatNumber(publicFilesToUpload.length))} new static assets uploaded (${colors$1.blueBright(prettyBytes(totalSizeToUpload))})`);
     }
+    if (publicFiles.length) {
+      const totalSize = publicFiles.reduce((acc, file) => acc + file.size, 0);
+      const totalGzipSize = publicFiles.reduce((acc, file) => acc + file.gzipSize, 0);
+      coreExports.info(`${colors$1.blueBright(formatNumber(publicFiles.length))} static assets (${colors$1.blueBright(prettyBytes(totalSize))} / ${colors$1.blueBright(prettyBytes(totalGzipSize))} gzip)`);
+    }
+    const metaFiles = await Promise.all(pathsToDeploy.filter(isMetaPath).map((p) => getFile(storage, p, "base64")));
+    const serverFiles = await Promise.all(pathsToDeploy.filter(isServerPath).map((p) => getFile(storage, p, "base64")));
+    const serverFilesSize = serverFiles.reduce((acc, file) => acc + file.size, 0);
+    const serverFilesGzipSize = serverFiles.reduce((acc, file) => acc + file.gzipSize, 0);
+    coreExports.info(`${colors$1.blueBright(formatNumber(serverFiles.length))} server files (${colors$1.blueBright(prettyBytes(serverFilesSize))} / ${colors$1.blueBright(prettyBytes(serverFilesGzipSize))} gzip)`);
     if (!config.database) {
-      coreExports.debug("Skipping database migrations - database not enabled in config");
+      coreExports.debug("Skipping database migrations and queries - database not enabled in config");
+      return;
     }
     if (config.database) {
       coreExports.info("Processing database migrations...");
       const localMigrations = fileKeys.filter((fileKey) => fileKey.startsWith("database:migrations:") && fileKey.endsWith(".sql")).map((fileKey) => fileKey.replace("database:migrations:", "").replace(".sql", ""));
       if (!localMigrations.length) {
+        coreExports.debug(`Skipping database migrations - no database migrations found in ${colors$1.blueBright(`${directory}/database/migrations`)}`);
         coreExports.info("No pending migrations to apply");
-        coreExports.debug(`No database migrations found in ${colors$1.blueBright(`${directory}/database/migrations`)}`);
-        return;
       }
-      coreExports.debug("Creating migrations table if non-existent...");
-      await createMigrationsTable({
-        hubUrl,
-        projectKey,
-        token: projectInfo.accessToken,
-        env: projectInfo.environment
-      });
-      coreExports.debug("Fetching remote migrations...");
-      const remoteMigrations = await fetchRemoteMigrations({
-        hubUrl,
-        projectKey,
-        token: projectInfo.accessToken,
-        env: projectInfo.environment
-      });
-      coreExports.info(`Found ${colors$1.blueBright(remoteMigrations.length)} applied database migration${remoteMigrations.length === 1 ? "" : "s"}`);
-      const pendingMigrations = localMigrations.filter((localName) => !remoteMigrations.find(({ name }) => name === localName));
-      if (!pendingMigrations.length) {
-        coreExports.info("No pending migrations to apply");
-        return;
-      }
-      for (const queryName of pendingMigrations) {
-        let query = await storage.getItem(`database/migrations/${queryName}.sql`);
-        if (query.at(-1) !== ";") query += ";";
-        query += `INSERT INTO _hub_migrations (name) values ('${queryName}');`;
-        coreExports.debug(`Applying database migration ${colors$1.blueBright(queryName)}...`);
-        coreExports.debug(query);
-        try {
-          await queryDatabase({
-            hubUrl,
-            projectKey,
-            token: projectInfo.accessToken,
-            env: projectInfo.environment,
-            query
-          });
-          coreExports.info(`Applied database migration ${colors$1.blueBright(queryName)}`);
-        } catch (error) {
-          const errorMessage = error?.response?._data?.message || error?.message;
-          coreExports.error(errorMessage, {
-            file: join("server/database/migrations", `${queryName}.sql`),
-            title: "Database migration failed"
-          });
-          throw new Error(`Failed to apply database migration ${queryName}: ${errorMessage}`);
+      if (localMigrations.length) {
+        coreExports.debug("Creating migrations table if non-existent...");
+        await createMigrationsTable({
+          hubUrl,
+          projectKey,
+          token: projectInfo.accessToken,
+          env: projectInfo.environment
+        });
+        coreExports.debug("Fetching remote migrations...");
+        const remoteMigrations = await fetchRemoteMigrations({
+          hubUrl,
+          projectKey,
+          token: projectInfo.accessToken,
+          env: projectInfo.environment
+        });
+        coreExports.info(`Found ${colors$1.blueBright(remoteMigrations.length)} applied database migration${remoteMigrations.length === 1 ? "" : "s"}`);
+        const pendingMigrations = localMigrations.filter((localName) => !remoteMigrations.find(({ name }) => name === localName));
+        if (!pendingMigrations.length) {
+          coreExports.info("No pending migrations to apply");
+          return;
         }
+        for (const queryName of pendingMigrations) {
+          let query = await storage.getItem(`database/migrations/${queryName}.sql`);
+          if (query.at(-1) !== ";") query += ";";
+          query += `INSERT INTO _hub_migrations (name) values ('${queryName}');`;
+          coreExports.debug(`Applying database migration ${colors$1.blueBright(queryName)}...`);
+          coreExports.debug(query);
+          try {
+            await queryDatabase({
+              hubUrl,
+              projectKey,
+              token: projectInfo.accessToken,
+              env: projectInfo.environment,
+              query
+            });
+            coreExports.info(`Applied database migration ${colors$1.blueBright(queryName)}`);
+          } catch (error) {
+            const errorMessage = error?.response?._data?.message || error?.message;
+            coreExports.error(errorMessage, {
+              file: join("server/database/migrations", `${queryName}.sql`),
+              title: "Database migration failed"
+            });
+            throw new Error(`Failed to apply database migration ${queryName}: ${errorMessage}`);
+          }
+        }
+        coreExports.info(`${colors$1.blueBright(formatNumber(localMigrations.length))} database migrations applied`);
       }
-      coreExports.info(`${colors$1.blueBright(formatNumber(localMigrations.length))} database migrations applied`);
+      const localQueries = fileKeys.filter((fileKey) => fileKey.startsWith("database:queries:") && fileKey.endsWith(".sql")).map((fileKey) => fileKey.replace("database:queries:", "").replace(".sql", ""));
+      if (!localQueries.length) {
+        coreExports.debug(`Skipping database queries - no database queries found in ${colors$1.blueBright(`${directory}/database/queries`)}`);
+      }
+      if (localQueries.length) {
+        coreExports.info(`Applying ${colors$1.blueBright(formatNumber(localQueries.length))} database queries...`);
+        for (const queryName of localQueries) {
+          const query = await storage.getItem(`database/queries/${queryName}.sql`);
+          coreExports.debug(`Applying database query ${colors$1.blueBright(queryName)}...`);
+          coreExports.debug(query);
+          try {
+            await queryDatabase({
+              hubUrl,
+              projectKey,
+              token: projectInfo.accessToken,
+              env: projectInfo.environment,
+              query
+            });
+            coreExports.info(`Applied database query ${colors$1.blueBright(queryName)}`);
+          } catch (error) {
+            const errorMessage = error?.response?._data?.message || error?.message;
+            coreExports.error(errorMessage, {
+              file: join("server/database/queries", `${queryName}.sql`),
+              title: "Database query failed"
+            });
+            throw new Error(`Failed to apply database query ${queryName}: ${errorMessage}`);
+          }
+        }
+        coreExports.info(`${colors$1.blueBright(formatNumber(localQueries.length))} database queries applied`);
+      }
     }
+    coreExports.debug(`Publishing deployment...`);
+    const deployment = await $api(`/teams/${projectInfo.teamSlug}/projects/${projectInfo.projectSlug}/${projectInfo.environment}/deploy/complete`, {
+      method: "POST",
+      body: {
+        deploymentKey,
+        serverFiles,
+        metaFiles
+      }
+    });
+    coreExports.debug(`Deployment details ${JSON.stringify(deployment)}`);
+    coreExports.setOutput("deployment-url", deployment.primaryUrl);
+    coreExports.setOutput("branch-url", deployment.branchUrl);
+    coreExports.setOutput("environment", projectInfo.environment);
+    coreExports.info(`Deployed to ${projectInfo.environment}: ${deployment.url ?? deployment.primaryUrl}`);
   } catch (error) {
     if (error instanceof Error) coreExports.setFailed(error.message);
   }
