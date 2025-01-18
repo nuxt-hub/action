@@ -1,51 +1,43 @@
-import * as httpClient from '@actions/http-client'
+import { ofetch } from 'ofetch'
+import { CreateDatabaseMigrationsTableQuery, ListDatabaseMigrationsQuery } from 'nuxthub/internal'
 
 export async function queryDatabase(options: {
   hubUrl: string
   projectKey: string
-  accessToken: string
+  token: string
   env: string
   query: string
 }) {
-  const http = new httpClient.HttpClient('nuxt-hub-action')
-  const response = await http.postJson(
-    `${options.hubUrl}/api/projects/${options.projectKey}/database/${options.env}/query`,
-    { query: options.query },
-    { authorization: `Bearer ${options.accessToken}` },
-  )
-  if (response.statusCode !== 200) {
-    throw new Error(
-      `Failed to query database: HTTP ${response.statusCode} ${response.result}`,
-    )
-  }
-  return response.result
+  return await ofetch(`${options.hubUrl}/api/projects/${options.projectKey}/database/${options.env}/query`, {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${options.token}`
+    },
+    body: {
+      query: options.query
+    }
+  }).catch((error) => {
+    throw new Error(`Failed to query database: ${error.message}`)
+  })
 }
-
-const CreateMigrationsTableQuery = `CREATE TABLE IF NOT EXISTS _hub_migrations (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    name       TEXT UNIQUE,
-    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
-);`
 
 export async function createMigrationsTable(options: {
   hubUrl: string
   projectKey: string
-  accessToken: string
+  token: string
   env: string
 }) {
-  await queryDatabase({ ...options, query: CreateMigrationsTableQuery })
+  await queryDatabase({ ...options, query: CreateDatabaseMigrationsTableQuery })
 }
 
 export async function fetchRemoteMigrations(options: {
   hubUrl: string
   projectKey: string
-  accessToken: string
+  token: string
   env: string
 }): Promise<{ id: number, name: string, applied_at: string }[]> {
-  const query
-    = 'select "id", "name", "applied_at" from "_hub_migrations" order by "_hub_migrations"."id"'
   try {
-    const res = (await queryDatabase({ ...options, query })) as {
+    const res = (await queryDatabase({ ...options, query: ListDatabaseMigrationsQuery })) as {
       results: { id: number, name: string, applied_at: string }[]
     }[]
 

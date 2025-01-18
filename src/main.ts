@@ -1,11 +1,11 @@
-import { access, stat, readFile, readdir } from 'node:fs/promises'
-import { extname, join } from 'node:path'
-import { createHash } from 'node:crypto'
+import { joinURL } from 'ufo'
+import { ofetch } from 'ofetch'
+import colors from "picocolors"
+import prettyBytes from 'pretty-bytes'
 import * as core from '@actions/core'
-import * as glob from '@actions/glob'
-import * as httpClient from '@actions/http-client'
-import mime from 'mime'
+import { getStorage, getPathsToDeploy, getFile, uploadAssetsToCloudflare, isMetaPath, isServerPath, getPublicFiles } from 'nuxthub/internal'
 import { createMigrationsTable, fetchRemoteMigrations, queryDatabase } from './database.js'
+import { join } from 'node:path'
 
 export async function run() {
   try {
@@ -13,237 +13,250 @@ export async function run() {
     const directory = core.getInput('directory')
     const hubUrl = core.getInput('hub-url')
 
-    const MAX_ASSET_SIZE = 25 * 1024 * 1024
-
     if (projectKeyInput) core.debug(`Linked with: ${projectKeyInput}`)
     core.debug(`Nuxt output directory: ${directory}`)
     core.debug(`NuxtHub URL: ${hubUrl}`)
 
-    // Get CI/CD token
+    let accessToken = ''
+    const $api = ofetch.create({
+      baseURL: joinURL(hubUrl, '/api'),
+      onRequest({ options }) {
+        if (!options.headers.has('Authorization')) {
+          options.headers.set('Authorization', `Bearer ${accessToken}`)
+        }
+      }
+    })
+
+    // #region Get CI/CD token
     const audience = projectKeyInput
       ? new URL(`${hubUrl}/projects/${projectKeyInput}`).toString()
       : undefined
     const idToken = await core.getIDToken(audience)
     core.debug(`Got ID token`)
+    // #endregion
 
-    // Get project info
-    console.log('Retrieving project information...')
-    const http = new httpClient.HttpClient('nuxt-hub-action')
-    const projectInfoResponse = await http.getJson<{
+    // #region Get project info
+    core.debug('Retrieving project information...')
+    const projectInfo = await $api<{
       accessToken: string
       teamSlug: string
       projectSlug: string
       projectKey: string
       environment: 'production' | 'preview'
-    }>(`${hubUrl}/api/ci-cd/token`, {
-      authorization: `Bearer ${idToken}`,
+    }>(`/ci-cd/token`, {
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+      },
+    }).catch((err) => {
+      if (err.data?.statusCode === 404) throw new Error('Project not found')
+      core.debug(`Error: ${err.message}`)
+      throw err
     })
-    if (!projectInfoResponse.result || projectInfoResponse.statusCode !== 200) {
-      throw new Error('Project not found')
-    }
-    const projectInfo = projectInfoResponse.result
+    accessToken = projectInfo.accessToken
     const projectKey = projectInfo.projectKey
     core.setSecret(projectInfo.accessToken)
     core.debug(`Retrieved project info ${JSON.stringify(projectInfo)}`)
 
-    core.info(`Deploying ${projectInfo.projectSlug} to ${projectInfo.environment} environment...`)
+    core.info(`Deploying ${colors.blueBright(projectInfo.projectSlug)} to ${colors.blueBright(projectInfo.environment)} environment...`)
+    // #endregion
 
-    // Validate directory exists
-    core.debug(`Checking directory ${directory} exists`)
-    try {
-      await access(directory)
-    }
-    catch {
-      throw new Error(`Directory ${directory} does not exist`)
-    }
+    // #region Prepare deployment
+    core.debug(`Processing files in ${directory}...`)
 
-    // Determine files to deploy
-    core.debug(`Processing files in ${directory}`)
-    const globber = await glob.create(`${directory}/**/*`, {
-      implicitDescendants: false,
-    })
-    const files = await globber.glob().then(async (files) => {
-      const fileStats = await Promise.all(files.map(async file => stat(file)))
-      return files.filter((file, index) => fileStats[index].isFile())
-    })
+    const storage = await getStorage(directory)
+    const fileKeys = await storage.getKeys()
+    const pathsToDeploy = getPathsToDeploy(fileKeys)
+    const config = await storage.getItem('hub.config.json')
+    const { format: formatNumber } = new Intl.NumberFormat('en-US')
 
-    const fileKeys = files.map((file) => {
-      const relativePath = file.replace(`${process.cwd()}/`, '')
-      return relativePath.substring(directory.length + 1)
-    })
+    const publicFiles = await getPublicFiles(storage, pathsToDeploy)
 
-    const filesToDeploy = fileKeys.filter((fileKey) => {
-      if (fileKey.startsWith('.wrangler/')) return false
-      if (fileKey.startsWith('node_modules/')) return false
-      if (fileKey.startsWith('database/migrations/')) return false
-      if (fileKey === 'wrangler.toml') return false
-      if (fileKey === '.dev.vars') return false
-      return true
-    })
-    core.debug(`Files to deploy ${JSON.stringify(filesToDeploy)}`)
-
-    if (!filesToDeploy.includes('hub.config.json')) {
-      throw new Error(`${directory}/hub.config.json is missing, please make sure that @nuxthub/core is enabled in your nuxt.config.ts.`)
-    }
-
-    // Prepare files for deployment
-    core.debug('Preparing files for deployment...')
-    const deployFiles = await Promise.all(
-      filesToDeploy.map(async (fileKey) => {
-        const filePath = `${process.cwd()}/${directory}/${fileKey}`
-        const fileSize = (await stat(filePath)).size
-        const content = await readFile(filePath)
-        const contentBase64 = content.toString('base64')
-
-        if (fileSize > MAX_ASSET_SIZE) {
-          throw new Error(`NuxtHub deploy only supports files up to ${MAX_ASSET_SIZE} in size. ${filePath} is ${fileSize} in size.`)
-        }
-
-        return {
-          path: `/${fileKey}`,
-          key: hashFile(filePath, contentBase64),
-          value: contentBase64,
-          base64: true,
-          metadata: {
-            contentType: mime.getType(filePath) || 'application/octet-stream',
-          },
-        }
-      }),
-    )
-
-    // Deploy
-    core.debug('Deploying to NuxtHub...')
-    interface Deployment {
-      url: string
-      primaryUrl: string
-      branchUrl: string
-    }
-    const deployment = await http.postJson<Deployment>(
-      `${hubUrl}/api/teams/${projectInfo.teamSlug}/projects/${projectInfo.projectSlug}/deploy`,
-      { files: deployFiles },
-      { authorization: `Bearer ${projectInfo.accessToken}` },
-    )
-    core.debug(`Deployment details ${JSON.stringify(deployment.result)}`)
-
-    if (!deployment.result || deployment.statusCode !== 200) {
-      const result = deployment.result as unknown
-
-      if (result?.data?.name === 'ZodError') {
-        throw new Error(JSON.stringify(result.data.issues))
+    core.debug('Preparing deployment...')
+    const deploymentInfo = await $api(`/teams/${projectInfo.teamSlug}/projects/${projectInfo.projectSlug}/${projectInfo.environment}/deploy/prepare`, {
+      method: 'POST',
+      body: {
+        config,
+        /**
+         * Public manifest is a map of file paths to their unique hash (SHA256 sliced to 32 characters).
+         * @example
+         * {
+         *   "/index.html": "hash",
+         *   "/assets/image.png": "hash"
+         * }
+         */
+        publicManifest: publicFiles.reduce((acc, file) => {
+          acc[file.path] = file.hash
+          return acc
+        }, {})
       }
-      else if (result?.message?.includes('Error: ')) {
-        throw new Error(result.message.split('Error: ')[1])
+    }).catch((err) => {
+      if (err.data?.data?.name === 'ZodError') {
+        throw new Error(err.data.data.issues)
       }
-      else if (result?.message) {
-        throw new Error(result.message.split(' - ')[1] || result.message)
+      else if (err.message.includes('Error: ')) {
+        throw new Error(err.message.split('Error: ')[1])
+      } else {
+        throw new Error(err.message.split(' - ')[1] || err.message)
       }
+    })
+    const { deploymentKey, missingPublicHashes, cloudflareUploadJwt } = deploymentInfo
+    const publicFilesToUpload = publicFiles.filter(file => missingPublicHashes.includes(file.hash))
 
-      throw new Error('Deployment failed')
+    core.debug('Uploading assets to Cloudflare...')
+    if (publicFilesToUpload.length) {
+      const totalSizeToUpload = publicFilesToUpload.reduce((acc, file) => acc + file.size, 0)
+      core.debug(`Uploading ${colors.blueBright(formatNumber(publicFilesToUpload.length))} new static assets (${colors.blueBright(prettyBytes(totalSizeToUpload))})...`)
+      await uploadAssetsToCloudflare(publicFilesToUpload, cloudflareUploadJwt, ({ progressSize, totalSize }) => {
+        const percentage = Math.round((progressSize / totalSize) * 100)
+        core.debug(`${percentage}% uploaded (${prettyBytes(progressSize)}/${prettyBytes(totalSize)})`)
+      })
+      core.info(`${colors.blueBright(formatNumber(publicFilesToUpload.length))} new static assets uploaded (${colors.blueBright(prettyBytes(totalSizeToUpload))})`)
     }
 
-    // Set outputs
-    core.setOutput('deployment-url', deployment.result.primaryUrl)
-    core.setOutput('branch-url', deployment.result.branchUrl)
-    core.setOutput('environment', projectInfo.environment)
-    core.info(`Deployed to ${projectInfo.environment}: ${deployment.result.url ?? deployment.result.primaryUrl}`)
-
-    // Apply migrations
-    const hubConfigPath = join(process.cwd(), directory, 'hub.config.json')
-    const hubConfig = JSON.parse(await readFile(hubConfigPath, 'utf-8')) as {
-      database?: boolean
+    if (publicFiles.length) {
+      const totalSize = publicFiles.reduce((acc, file) => acc + file.size, 0)
+      const totalGzipSize = publicFiles.reduce((acc, file) => acc + file.gzipSize, 0)
+      core.info(`${colors.blueBright(formatNumber(publicFiles.length))} static assets (${colors.blueBright(prettyBytes(totalSize))} / ${colors.blueBright(prettyBytes(totalGzipSize))} gzip)`)
     }
 
-    if (!hubConfig.database) {
-      core.debug('Skipping database migrations - database not enabled in config')
+    const metaFiles = await Promise.all(pathsToDeploy.filter(isMetaPath).map(p => getFile(storage, p, 'base64')))
+    const serverFiles = await Promise.all(pathsToDeploy.filter(isServerPath).map(p => getFile(storage, p, 'base64')))
+    const serverFilesSize = serverFiles.reduce((acc, file) => acc + file.size, 0)
+    const serverFilesGzipSize = serverFiles.reduce((acc, file) => acc + file.gzipSize, 0)
+    core.info(`${colors.blueBright(formatNumber(serverFiles.length))} server files (${colors.blueBright(prettyBytes(serverFilesSize))} / ${colors.blueBright(prettyBytes(serverFilesGzipSize))} gzip)`)
+    // #endregion
+
+    // #region Database migrations
+    if (!config.database) {
+      core.debug('Skipping database migrations and queries - database not enabled in config')
+      return
     }
 
-    if (hubConfig.database) {
+    if (config.database) {
       core.info('Processing database migrations...')
 
-      const deployEnv = projectInfo.environment
-      const migrationsDir = join(process.cwd(), 'server/database/migrations')
-
-      try {
-        await access(migrationsDir)
-      }
-      catch {
-        core.info(`Skipping database migrations - ${migrationsDir} does not exist`)
-        return
-      }
-
-      core.debug('Creating migrations table if non-existent...')
-      await createMigrationsTable({
-        hubUrl,
-        projectKey,
-        accessToken: projectInfo.accessToken,
-        env: deployEnv,
-      })
-
-      core.debug('Fetching remote migrations...')
-      const remoteMigrations = await fetchRemoteMigrations({
-        hubUrl,
-        projectKey,
-        accessToken: projectInfo.accessToken,
-        env: deployEnv,
-      })
-      core.info(`Found ${remoteMigrations.length} existing migrations`)
-
-      const localMigrations = (await readdir(migrationsDir))
-        .filter(file => file.endsWith('.sql'))
-        .map(file => file.replace('.sql', ''))
-
-      const pendingMigrations = localMigrations.filter(
-        localName => !remoteMigrations.find(({ name }) => name === localName),
-      )
-
-      if (!pendingMigrations.length) {
+      const localMigrations = fileKeys
+        .filter(fileKey => fileKey.startsWith('database:migrations:') && fileKey.endsWith('.sql'))
+        .map(fileKey => fileKey.replace('database:migrations:', '').replace('.sql', ''))
+      if (!localMigrations.length) {
+        core.debug(`Skipping database migrations - no database migrations found in ${colors.blueBright(`${directory}/database/migrations`)}`)
         core.info('No pending migrations to apply')
       }
 
-      for (const migration of pendingMigrations) {
-        core.info(`Applying migration ${migration}...`)
+      if (localMigrations.length) {
+        core.debug('Creating migrations table if non-existent...')
+        await createMigrationsTable({
+          hubUrl,
+          projectKey,
+          token: projectInfo.accessToken,
+          env: projectInfo.environment,
+        })
 
-        let query = await readFile(
-          join(migrationsDir, `${migration}.sql`),
-          'utf-8',
-        )
+        core.debug('Fetching remote migrations...')
+        const remoteMigrations = await fetchRemoteMigrations({
+          hubUrl,
+          projectKey,
+          token: projectInfo.accessToken,
+          env: projectInfo.environment,
+        })
+        core.info(`Found ${colors.blueBright(remoteMigrations.length)} applied database migration${remoteMigrations.length === 1 ? '' : 's'}`)
 
-        if (query.at(-1) !== ';') query += ';'
-        query += `INSERT INTO _hub_migrations (name) values ('${migration}');`
+        const pendingMigrations = localMigrations.filter(localName => !remoteMigrations.find(({ name }) => name === localName))
+        if (!pendingMigrations.length) core.info('No pending migrations to apply')
 
-        try {
-          await queryDatabase({
-            hubUrl,
-            projectKey,
-            accessToken: projectInfo.accessToken,
-            env: deployEnv,
-            query,
-          })
-          core.info(`Successfully applied migration ${migration}`)
+        for (const queryName of pendingMigrations) {
+          let query = await storage.getItem(`database/migrations/${queryName}.sql`)
+
+          if (query.at(-1) !== ';') query += ';'
+          query += `INSERT INTO _hub_migrations (name) values ('${queryName}');`
+
+          core.debug(`Applying database migration ${colors.blueBright(queryName)}...`)
+          core.debug(query)
+
+          try {
+            await queryDatabase({
+              hubUrl,
+              projectKey,
+              token: projectInfo.accessToken,
+              env: projectInfo.environment,
+              query,
+            })
+            core.info(`Applied database migration ${colors.blueBright(queryName)}`)
+          }
+          catch (error) {
+            const errorMessage = error?.response?._data?.message || error?.message
+            core.error(errorMessage as string, {
+              file: join('server/database/migrations', `${queryName}.sql`),
+              title: 'Database migration failed',
+            })
+            throw new Error(`Failed to apply database migration ${queryName}: ${errorMessage}`)
+          }
         }
-        catch (error) {
-          const errorMessage = error?.response?._data?.message || error?.message
-          // Add GitHub error annotation to the migration file
-          core.error(errorMessage as string, {
-            file: join('server/database/migrations', `${migration}.sql`),
-            title: 'Migration failed',
-          })
-          throw new Error(`Failed to apply migration ${migration}: ${errorMessage}`)
-        }
-        core.info('Migrations applied successfully')
+        if (pendingMigrations.length) core.info(`${colors.blueBright(formatNumber(localMigrations.length))} database migrations applied`)
       }
+      // #endregion
+
+      // #region Database queries
+      const localQueries = fileKeys
+        .filter(fileKey => fileKey.startsWith('database:queries:') && fileKey.endsWith('.sql'))
+        .map(fileKey => fileKey.replace('database:queries:', '').replace('.sql', ''))
+      if (!localQueries.length) {
+        core.debug(`Skipping database queries - no database queries found in ${colors.blueBright(`${directory}/database/queries`)}`)
+      }
+
+      if (localQueries.length) {
+        core.info(`Applying ${colors.blueBright(formatNumber(localQueries.length))} database ${localQueries.length === 1 ? 'query' : 'queries'}...`)
+        for (const queryName of localQueries) {
+          const query = await storage.getItem(`database/queries/${queryName}.sql`)
+
+          core.debug(`Applying database query ${colors.blueBright(queryName)}...`)
+          core.debug(query)
+
+          try {
+            await queryDatabase({
+              hubUrl,
+              projectKey,
+              token: projectInfo.accessToken,
+              env: projectInfo.environment,
+              query
+            })
+            core.info(`Applied database query ${colors.blueBright(queryName)}`)
+          } catch (error) {
+            const errorMessage = error?.response?._data?.message || error?.message
+            core.error(errorMessage as string, {
+              file: join('server/database/queries', `${queryName}.sql`),
+              title: 'Database query failed',
+            })
+            throw new Error(`Failed to apply database query ${queryName}: ${errorMessage}`)
+          }
+
+        }
+        core.info(`${colors.blueBright(formatNumber(localQueries.length))} database ${localQueries.length === 1 ? 'query' : 'queries'} applied`)
+      }
+      // #endregion
     }
+
+    // #region Complete deployment
+    core.debug(`Publishing deployment...`)
+    const deployment = await $api(`/teams/${projectInfo.teamSlug}/projects/${projectInfo.projectSlug}/${projectInfo.environment}/deploy/complete`, {
+      method: 'POST',
+      body: {
+        deploymentKey,
+        serverFiles,
+        metaFiles
+      },
+    })
+
+    core.debug(`Deployment details ${JSON.stringify(deployment)}`)
+
+    // Set outputs
+    core.setOutput('deployment-url', deployment.primaryUrl)
+    core.setOutput('branch-url', deployment.branchUrl)
+    core.setOutput('environment', projectInfo.environment)
+    core.info(`Deployed to ${projectInfo.environment}: ${deployment.url ?? deployment.primaryUrl}`)
+    // #endregion
   }
   catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
   }
-}
-
-function hashFile(filepath: string, base64: string) {
-  const extension = extname(filepath).substring(1)
-
-  return createHash('md5')
-    .update(base64 + extension)
-    .digest('hex')
-    .slice(0, 32)
 }
