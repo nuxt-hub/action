@@ -9,6 +9,7 @@ export async function queryDatabase(options: {
   query: string
 }) {
   return await ofetch(`${options.hubUrl}/api/projects/${options.projectKey}/database/${options.env}/query`, {
+    method: 'POST',
     headers: {
       authorization: `Bearer ${options.token}`
     },

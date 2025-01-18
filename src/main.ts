@@ -155,9 +155,9 @@ export async function run() {
       const localMigrations = fileKeys
         .filter(fileKey => fileKey.startsWith('database:migrations:') && fileKey.endsWith('.sql'))
         .map(fileKey => fileKey.replace('database:migrations:', '').replace('.sql', ''))
-      const pendingMigrations = localMigrations.filter(localName => !remoteMigrations.find(({ name }) => name === localName))
-      if (!pendingMigrations.length) {
+      if (!localMigrations.length) {
         core.info('No pending migrations to apply.')
+        core.debug(`No database migrations found in ${colors.blueBright(`${directory}/database/migrations`)}`)
         return
       }
 
@@ -176,67 +176,48 @@ export async function run() {
         token: projectInfo.accessToken,
         env: projectInfo.environment,
       })
-      core.info(`Found ${remoteMigrations.length} database migration${remoteMigrations.length === 1 ? '' : 's'}`)
+      core.info(`Found ${colors.blueBright(remoteMigrations.length)} applied database migration${remoteMigrations.length === 1 ? '' : 's'}`)
 
-      for (const migration of pendingMigrations) {
-        core.info(`Applying database migration ${colors.blueBright(migration)}`)
-
-        let query = await storage.getItem(`database/migrations/${migration}.sql`)
-
-        if (query.at(-1) !== ';') query += ';'
-        query += `INSERT INTO _hub_migrations (name) values ('${migration}');`
-
-        try {
-          await queryDatabase({
-            hubUrl,
-            projectKey,
-            token: projectInfo.accessToken,
-            env: projectInfo.environment,
-            query,
-          })
-          core.info(`Successfully applied database migration ${migration}`)
-        }
-        catch (error) {
-          const errorMessage = error?.response?._data?.message || error?.message
-          core.error(errorMessage as string, {
-            file: join('server/database/migrations', `${migration}.sql`),
-            title: 'Database migration failed',
-          })
-          throw new Error(`Failed to apply database migration ${migration}: ${errorMessage}`)
-        }
-        core.info('Database migrations applied successfully')
+      const pendingMigrations = localMigrations.filter(localName => !remoteMigrations.find(({ name }) => name === localName))
+      if (!pendingMigrations.length) {
+        core.info('No pending migrations to apply.')
+        return
       }
-    }
-    // #endregion
-    // #region Database queries
-    const localQueries = fileKeys
-      .filter(fileKey => fileKey.startsWith('database:queries:') && fileKey.endsWith('.sql'))
-      .map(fileKey => fileKey.replace('database:queries:', '').replace('.sql', ''))
 
-    if (localQueries.length) {
-      core.info(`Applying ${colors.blueBright(formatNumber(localQueries.length))} database queries...`)
-      for (const queryName of localQueries) {
-        const query = await storage.getItem(`database/queries/${queryName}.sql`)
+      if (localMigrations.length) {
+        core.info(`Applying ${colors.blueBright(formatNumber(localMigrations.length))} database migrations...`)
 
-        try {
-          await queryDatabase({
-            hubUrl,
-            projectKey,
-            token: projectInfo.accessToken,
-            env: projectInfo.environment,
-            query
-          })
-        } catch (error) {
-          const errorMessage = error?.response?._data?.message || error?.message
-          core.error(errorMessage as string, {
-            file: join('server/database/queries', `${queryName}.sql`),
-            title: 'Database query failed',
-          })
-          throw new Error(`Failed to apply database query ${queryName}: ${errorMessage}`)
+        for (const queryName of pendingMigrations) {
+          let query = await storage.getItem(`database/migrations/${queryName}.sql`)
+
+          if (query.at(-1) !== ';') query += ';'
+          query += `INSERT INTO _hub_migrations (name) values ('${queryName}');`
+
+          core.debug(`Applying database migration ${colors.blueBright(queryName)}...`)
+          core.debug(query)
+
+          try {
+            await queryDatabase({
+              hubUrl,
+              projectKey,
+              token: projectInfo.accessToken,
+              env: projectInfo.environment,
+              query,
+            })
+            core.info(`Applied database migration ${colors.blueBright(queryName)}`)
+          }
+          catch (error) {
+            const errorMessage = error?.response?._data?.message || error?.message
+            core.error(errorMessage as string, {
+              file: join('server/database/migrations', `${queryName}.sql`),
+              title: 'Database migration failed',
+            })
+            throw new Error(`Failed to apply database migration ${queryName}: ${errorMessage}`)
+          }
         }
 
+        core.info(`Applied ${colors.blueBright(formatNumber(localMigrations.length))} database migrations`)
       }
-      core.info(`Applied ${colors.blueBright(formatNumber(localQueries.length))} database queries.`)
     }
     // #endregion
   }

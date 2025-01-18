@@ -45981,6 +45981,13 @@ function requireWebsocketServer () {
 
 requireWebsocketServer();
 
+const CreateDatabaseMigrationsTableQuery = `CREATE TABLE IF NOT EXISTS _hub_migrations (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    name       TEXT UNIQUE,
+    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+);`;
+const ListDatabaseMigrationsQuery = 'select "id", "name", "applied_at" from "_hub_migrations" order by "_hub_migrations"."id"';
+
 const getOptions = options => ({level: 9, ...options});
 const gzip = promisify(st.gzip);
 
@@ -46177,8 +46184,9 @@ async function uploadAssetsToCloudflare(files, cloudflareUploadJwt, onProgress) 
 
 async function queryDatabase(options) {
   return await ofetch(`${options.hubUrl}/api/projects/${options.projectKey}/database/${options.env}/query`, {
+    method: "POST",
     headers: {
-      authorization: `Bearer ${options.accessToken}`
+      authorization: `Bearer ${options.token}`
     },
     body: {
       query: options.query
@@ -46187,18 +46195,12 @@ async function queryDatabase(options) {
     throw new Error(`Failed to query database: ${error.message}`);
   });
 }
-const CreateMigrationsTableQuery = `CREATE TABLE IF NOT EXISTS _hub_migrations (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    name       TEXT UNIQUE,
-    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
-);`;
 async function createMigrationsTable(options) {
-  await queryDatabase({ ...options, query: CreateMigrationsTableQuery });
+  await queryDatabase({ ...options, query: CreateDatabaseMigrationsTableQuery });
 }
 async function fetchRemoteMigrations(options) {
-  const query = 'select "id", "name", "applied_at" from "_hub_migrations" order by "_hub_migrations"."id"';
   try {
-    const res = await queryDatabase({ ...options, query });
+    const res = await queryDatabase({ ...options, query: ListDatabaseMigrationsQuery });
     return res[0]?.results ?? [];
   } catch (error) {
     if (error?.response?._data?.message?.includes("no such table")) {
@@ -46319,56 +46321,59 @@ async function run() {
     }
     if (config.database) {
       coreExports.info("Processing database migrations...");
-      const localMigrations = fileKeys.filter((fileKey) => {
-        const isMigrationsDir = fileKey.startsWith("database:migrations:");
-        const isSqlFile = fileKey.endsWith(".sql");
-        return isMigrationsDir && isSqlFile;
-      }).map((fileName) => {
-        return fileName.replace("database:migrations:", "").replace(".sql", "");
-      });
-      const pendingMigrations = localMigrations.filter((localName) => !remoteMigrations.find(({ name }) => name === localName));
-      if (!pendingMigrations.length) {
+      const localMigrations = fileKeys.filter((fileKey) => fileKey.startsWith("database:migrations:") && fileKey.endsWith(".sql")).map((fileKey) => fileKey.replace("database:migrations:", "").replace(".sql", ""));
+      if (!localMigrations.length) {
         coreExports.info("No pending migrations to apply.");
+        coreExports.debug(`No database migrations found in ${colors$1.blueBright(`${directory}/database/migrations`)}`);
         return;
       }
       coreExports.debug("Creating migrations table if non-existent...");
       await createMigrationsTable({
         hubUrl,
         projectKey,
-        accessToken: projectInfo.accessToken,
+        token: projectInfo.accessToken,
         env: projectInfo.environment
       });
       coreExports.debug("Fetching remote migrations...");
       const remoteMigrations = await fetchRemoteMigrations({
         hubUrl,
         projectKey,
-        accessToken: projectInfo.accessToken,
+        token: projectInfo.accessToken,
         env: projectInfo.environment
       });
-      coreExports.info(`Found ${remoteMigrations.length} migration${remoteMigrations.length === 1 ? "" : "s"}`);
-      for (const migration of pendingMigrations) {
-        coreExports.info(`Applying migration ${colors$1.blueBright(migration)}`);
-        let query = await storage.getItem(`database/migrations/${migration}.sql`);
-        if (query.at(-1) !== ";") query += ";";
-        query += `INSERT INTO _hub_migrations (name) values ('${migration}');`;
-        try {
-          await queryDatabase({
-            hubUrl,
-            projectKey,
-            accessToken: projectInfo.accessToken,
-            env: projectInfo.environment,
-            query
-          });
-          coreExports.info(`Successfully applied migration ${migration}`);
-        } catch (error) {
-          const errorMessage = error?.response?._data?.message || error?.message;
-          coreExports.error(errorMessage, {
-            file: join("server/database/migrations", `${migration}.sql`),
-            title: "Migration failed"
-          });
-          throw new Error(`Failed to apply migration ${migration}: ${errorMessage}`);
+      coreExports.info(`Found ${colors$1.blueBright(remoteMigrations.length)} applied database migration${remoteMigrations.length === 1 ? "" : "s"}`);
+      const pendingMigrations = localMigrations.filter((localName) => !remoteMigrations.find(({ name }) => name === localName));
+      if (!pendingMigrations.length) {
+        coreExports.info("No pending migrations to apply.");
+        return;
+      }
+      if (localMigrations.length) {
+        coreExports.info(`Applying ${colors$1.blueBright(formatNumber(localMigrations.length))} database migrations...`);
+        for (const queryName of pendingMigrations) {
+          let query = await storage.getItem(`database/migrations/${queryName}.sql`);
+          if (query.at(-1) !== ";") query += ";";
+          query += `INSERT INTO _hub_migrations (name) values ('${queryName}');`;
+          coreExports.debug(`Applying database migration ${colors$1.blueBright(queryName)}...`);
+          coreExports.debug(query);
+          try {
+            await queryDatabase({
+              hubUrl,
+              projectKey,
+              token: projectInfo.accessToken,
+              env: projectInfo.environment,
+              query
+            });
+            coreExports.info(`Applied database migration ${colors$1.blueBright(queryName)}`);
+          } catch (error) {
+            const errorMessage = error?.response?._data?.message || error?.message;
+            coreExports.error(errorMessage, {
+              file: join("server/database/migrations", `${queryName}.sql`),
+              title: "Database migration failed"
+            });
+            throw new Error(`Failed to apply database migration ${queryName}: ${errorMessage}`);
+          }
         }
-        coreExports.info("Migrations applied successfully");
+        coreExports.info(`Applied ${colors$1.blueBright(formatNumber(localMigrations.length))} database migrations`);
       }
     }
   } catch (error) {
