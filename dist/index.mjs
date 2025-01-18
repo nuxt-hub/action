@@ -46329,10 +46329,7 @@ async function run() {
         });
         coreExports.info(`Found ${colors$1.blueBright(remoteMigrations.length)} applied database migration${remoteMigrations.length === 1 ? "" : "s"}`);
         const pendingMigrations = localMigrations.filter((localName) => !remoteMigrations.find(({ name }) => name === localName));
-        if (!pendingMigrations.length) {
-          coreExports.info("No pending migrations to apply");
-          return;
-        }
+        if (!pendingMigrations.length) coreExports.info("No pending migrations to apply");
         for (const queryName of pendingMigrations) {
           let query = await storage.getItem(`database/migrations/${queryName}.sql`);
           if (query.at(-1) !== ";") query += ";";
@@ -46357,7 +46354,7 @@ async function run() {
             throw new Error(`Failed to apply database migration ${queryName}: ${errorMessage}`);
           }
         }
-        coreExports.info(`${colors$1.blueBright(formatNumber(localMigrations.length))} database migrations applied`);
+        if (pendingMigrations.length) coreExports.info(`${colors$1.blueBright(formatNumber(localMigrations.length))} database migrations applied`);
       }
       const localQueries = fileKeys.filter((fileKey) => fileKey.startsWith("database:queries:") && fileKey.endsWith(".sql")).map((fileKey) => fileKey.replace("database:queries:", "").replace(".sql", ""));
       if (!localQueries.length) {

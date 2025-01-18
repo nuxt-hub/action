@@ -162,10 +162,7 @@ export async function run() {
         core.info(`Found ${colors.blueBright(remoteMigrations.length)} applied database migration${remoteMigrations.length === 1 ? '' : 's'}`)
 
         const pendingMigrations = localMigrations.filter(localName => !remoteMigrations.find(({ name }) => name === localName))
-        if (!pendingMigrations.length) {
-          core.info('No pending migrations to apply')
-          return
-        }
+        if (!pendingMigrations.length) core.info('No pending migrations to apply')
 
         for (const queryName of pendingMigrations) {
           let query = await storage.getItem(`database/migrations/${queryName}.sql`)
@@ -195,7 +192,7 @@ export async function run() {
             throw new Error(`Failed to apply database migration ${queryName}: ${errorMessage}`)
           }
         }
-        core.info(`${colors.blueBright(formatNumber(localMigrations.length))} database migrations applied`)
+        if (pendingMigrations.length) core.info(`${colors.blueBright(formatNumber(localMigrations.length))} database migrations applied`)
       }
       // #endregion
 
