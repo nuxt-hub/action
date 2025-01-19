@@ -129,7 +129,6 @@ export async function run() {
     // #region Database migrations
     if (!config.database) {
       core.debug('Skipping database migrations and queries - database not enabled in config')
-      return
     }
 
     if (config.database) {

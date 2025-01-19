@@ -46303,7 +46303,6 @@ async function run() {
     coreExports.info(`${colors$1.blueBright(formatNumber(serverFiles.length))} server files (${colors$1.blueBright(prettyBytes(serverFilesSize))} / ${colors$1.blueBright(prettyBytes(serverFilesGzipSize))} gzip)`);
     if (!config.database) {
       coreExports.debug("Skipping database migrations and queries - database not enabled in config");
-      return;
     }
     if (config.database) {
       coreExports.info("Processing database migrations...");
