@@ -12,6 +12,5 @@ export default defineBuildConfig({
       exportConditions: ['production', 'node'] as any,
     },
   },
-  entries: ['src/index'],
-  externals: [/\.node$/],
+  entries: ['src/index']
 })
