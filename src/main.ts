@@ -90,12 +90,11 @@ export async function run() {
         }, {})
       }
     }).catch((err) => {
-      if (err.data?.data?.name === 'ZodError') {
-        throw new Error(err.data.data.issues)
+      if (err.data) {
+        core.debug(JSON.stringify(err.data))
+        throw new Error(`Error while preparing deployment: ${err.message} ${JSON.stringify(err.data.data?.issues ?? err.data)}`)
       }
-      else if (err.message.includes('Error: ')) {
-        throw new Error(err.message.split('Error: ')[1])
-      } else {
+      else {
         throw new Error(err.message.split(' - ')[1] || err.message)
       }
     })
@@ -244,6 +243,14 @@ export async function run() {
         serverFiles,
         metaFiles
       },
+    }).catch((err) => {
+      if (err.data) {
+        core.debug(JSON.stringify(err.data))
+        throw new Error(`Error while publishing deployment: ${err.message} ${JSON.stringify(err.data.data?.issues ?? err.data)}`)
+      }
+      else {
+        throw new Error(err.message.split(' - ')[1] || err.message)
+      }
     })
 
     core.debug(`Deployment details ${JSON.stringify(deployment)}`)
