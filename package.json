@@ -2,7 +2,7 @@
   "name": "@nuxthub/action",
   "description": "Deploy your Nuxt application to NuxtHub",
   "author": "NuxtHub",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "license": "Apache-2.0",
   "homepage": "https://github.com/nuxt-hub/action",
   "repository": {
