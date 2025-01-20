@@ -38,6 +38,7 @@ import 'child_process';
 import 'timers';
 import 'node:crypto';
 import 'node:fs/promises';
+import '/Users/atinux/Projects/nuxthub/action/node_modules/.pnpm/fsevents@2.3.3/node_modules/fsevents/fsevents.node';
 import 'node:os';
 import 'node:process';
 import 'node:tty';
