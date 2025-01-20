@@ -24,8 +24,8 @@ importers:
         specifier: ^9.18.0
         version: 9.18.0(jiti@2.4.2)
       nuxthub:
-        specifier: ^0.8.2
-        version: 0.8.2(@azure/storage-blob@12.26.0)
+        specifier: ^0.8.3
+        version: 0.8.3(@azure/storage-blob@12.26.0)
       ofetch:
         specifier: ^1.4.1
         version: 1.4.1
@@ -2342,8 +2342,8 @@ packages:
   nth-check@2.1.1:
     resolution: {integrity: sha512-lqjrjmaOoAnWfMmBPL+XNnynZh2+swxiX3WUE0s4yEHI6m+AwrK2UZOimIRl3X/4QctVqS8AiZjFqyOGrMXb/w==}
 
-  nuxthub@0.8.2:
-    resolution: {integrity: sha512-WhZ7uoymRXKmm/7SPGhX98kgnWCXHwChM8H0yFSm88igSWNEjfey2JuVzVO0lYio2/Zy4PMCjVq0x2DHAC2u4w==}
+  nuxthub@0.8.3:
+    resolution: {integrity: sha512-vxtE2NIU+h3E792HXNB+s9YrlRcRg8ZAa3Wy3MGtlQksZm9uuwyxO1t9wmypIgct41r+VYaaa57h/AROKX80Ig==}
     hasBin: true
 
   nypm@0.3.12:
@@ -5691,7 +5691,7 @@ snapshots:
     dependencies:
       boolbase: 1.0.0
 
-  nuxthub@0.8.2(@azure/storage-blob@12.26.0):
+  nuxthub@0.8.3(@azure/storage-blob@12.26.0):
     dependencies:
       '@clack/prompts': 0.9.1
       c12: 2.0.1

@@ -38025,6 +38025,7 @@ const NUXT_HUB_URL = process.env.NUXT_HUB_URL || INITIAL_CONFIG.hub?.url || 'htt
 const MAX_ASSET_SIZE = 25 * 1024 * 1024;
 const MAX_UPLOAD_CHUNK_SIZE = 10 * 1024 * 1024; // 10MiB chunk size (in bytes)
 const MAX_UPLOAD_ATTEMPTS = 5;
+const UPLOAD_RETRY_DELAY = 1000;
 const CONCURRENT_UPLOADS = 5;
 
 function loadUserConfig () {
@@ -46159,6 +46160,7 @@ async function uploadAssetsToCloudflare(files, cloudflareUploadJwt, onProgress) 
           Authorization: `Bearer ${cloudflareUploadJwt}`
         },
         retry: MAX_UPLOAD_ATTEMPTS,
+        retryDelay: UPLOAD_RETRY_DELAY,
         body: filesInChunk.map(file => ({
           path: file.path,
           key: file.hash,
