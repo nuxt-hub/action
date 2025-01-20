@@ -37,13 +37,12 @@ import require$$2$2 from 'child_process';
 import require$$6$1 from 'timers';
 import { createHash } from 'node:crypto';
 import { access } from 'node:fs/promises';
-import require$$0$b from '/Users/atinux/Projects/nuxthub/action/node_modules/.pnpm/fsevents@2.3.3/node_modules/fsevents/fsevents.node';
 import { homedir } from 'node:os';
 import process$1 from 'node:process';
 import * as tty from 'node:tty';
 import 'node:readline';
 import 'node:child_process';
-import require$$0$c from 'dgram';
+import require$$0$b from 'dgram';
 
 const HASH_RE = /#/g;
 const AMPERSAND_RE = /&/g;
@@ -34022,97 +34021,6 @@ function requireNodefsHandler () {
 
 var fseventsHandler = {exports: {}};
 
-var fsevents = {};
-
-/*
- ** © 2020 by Philipp Dunkel, Ben Noordhuis, Elan Shankar, Paul Miller
- ** Licensed under MIT License.
- */
-
-var hasRequiredFsevents;
-
-function requireFsevents () {
-	if (hasRequiredFsevents) return fsevents;
-	hasRequiredFsevents = 1;
-
-	if (process.platform !== "darwin") {
-	  throw new Error(`Module 'fsevents' is not compatible with platform '${process.platform}'`);
-	}
-
-	const Native = require$$0$b;
-	const events = Native.constants;
-
-	function watch(path, since, handler) {
-	  if (typeof path !== "string") {
-	    throw new TypeError(`fsevents argument 1 must be a string and not a ${typeof path}`);
-	  }
-	  if ("function" === typeof since && "undefined" === typeof handler) {
-	    handler = since;
-	    since = Native.flags.SinceNow;
-	  }
-	  if (typeof since !== "number") {
-	    throw new TypeError(`fsevents argument 2 must be a number and not a ${typeof since}`);
-	  }
-	  if (typeof handler !== "function") {
-	    throw new TypeError(`fsevents argument 3 must be a function and not a ${typeof handler}`);
-	  }
-
-	  let instance = Native.start(Native.global, path, since, handler);
-	  if (!instance) throw new Error(`could not watch: ${path}`);
-	  return () => {
-	    const result = instance ? Promise.resolve(instance).then(Native.stop) : Promise.resolve(undefined);
-	    instance = undefined;
-	    return result;
-	  };
-	}
-
-	function getInfo(path, flags) {
-	  return {
-	    path,
-	    flags,
-	    event: getEventType(flags),
-	    type: getFileType(flags),
-	    changes: getFileChanges(flags),
-	  };
-	}
-
-	function getFileType(flags) {
-	  if (events.ItemIsFile & flags) return "file";
-	  if (events.ItemIsDir & flags) return "directory";
-	  if (events.MustScanSubDirs & flags) return "directory"; 
-	  if (events.ItemIsSymlink & flags) return "symlink";
-	}
-	function anyIsTrue(obj) {
-	  for (let key in obj) {
-	    if (obj[key]) return true;
-	  }
-	  return false;
-	}
-	function getEventType(flags) {
-	  if (events.ItemRemoved & flags) return "deleted";
-	  if (events.ItemRenamed & flags) return "moved";
-	  if (events.ItemCreated & flags) return "created";
-	  if (events.ItemModified & flags) return "modified";
-	  if (events.RootChanged & flags) return "root-changed";
-	  if (events.ItemCloned & flags) return "cloned";
-	  if (anyIsTrue(flags)) return "modified";
-	  return "unknown";
-	}
-	function getFileChanges(flags) {
-	  return {
-	    inode: !!(events.ItemInodeMetaMod & flags),
-	    finder: !!(events.ItemFinderInfoMod & flags),
-	    access: !!(events.ItemChangeOwner & flags),
-	    xattrs: !!(events.ItemXattrMod & flags),
-	  };
-	}
-
-	fsevents.watch = watch;
-	fsevents.getInfo = getInfo;
-	fsevents.constants = events;
-	return fsevents;
-}
-
 var hasRequiredFseventsHandler;
 
 function requireFseventsHandler () {
@@ -34125,7 +34033,7 @@ function requireFseventsHandler () {
 
 	let fsevents;
 	try {
-	  fsevents = requireFsevents();
+	  fsevents = require('fsevents');
 	} catch (error) {
 	  if (process.env.CHOKIDAR_PRINT_FSEVENTS_REQUIRE_ERROR) console.error(error);
 	}
@@ -40624,7 +40532,7 @@ var hasRequiredUdp$1;
 function requireUdp$1 () {
 	if (hasRequiredUdp$1) return udp_1$1;
 	hasRequiredUdp$1 = 1;
-	const udp = require$$0$c;
+	const udp = require$$0$b;
 	const Packet = requirePacket();
 
 	/**
@@ -41123,7 +41031,7 @@ var hasRequiredUdp;
 function requireUdp () {
 	if (hasRequiredUdp) return udp_1;
 	hasRequiredUdp = 1;
-	const udp = require$$0$c;
+	const udp = require$$0$b;
 	const Packet = requirePacket();
 	const { equal } = require$$0$4;
 	const { debuglog } = require$$0$3;
