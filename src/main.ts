@@ -92,10 +92,10 @@ export async function run() {
     }).catch((err) => {
       if (err.data) {
         core.debug(JSON.stringify(err.data))
-        throw new Error(`Error while preparing deployment: ${err.message} ${JSON.stringify(err.data.data?.issues ?? err.data)}`)
+        throw new Error(`Error while preparing deployment: ${JSON.stringify(err.data.data?.issues || err.data.statusMessage || err.data.message || err.data)} - ${err.message}`)
       }
       else {
-        throw new Error(err.message.split(' - ')[1] || err.message)
+        throw new Error(`Error while preparing deployment: ${err.message.split(' - ')[1] || err.message}`)
       }
     })
     const { deploymentKey, missingPublicHashes, cloudflareUploadJwt } = deploymentInfo
@@ -246,10 +246,10 @@ export async function run() {
     }).catch((err) => {
       if (err.data) {
         core.debug(JSON.stringify(err.data))
-        throw new Error(`Error while publishing deployment: ${err.message} ${JSON.stringify(err.data.data?.issues ?? err.data)}`)
+        throw new Error(`Error while publishing deployment: ${JSON.stringify(err.data.data?.issues || err.data.statusMessage || err.data.message || err.data)} - ${err.message}`)
       }
       else {
-        throw new Error(err.message.split(' - ')[1] || err.message)
+        throw new Error(`Error while publishing deployment: ${err.message.split(' - ')[1] || err.message}`)
       }
     })
 
