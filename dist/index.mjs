@@ -46884,6 +46884,10 @@ async function run() {
     coreExports.setOutput("environment", projectInfo.environment);
     coreExports.info(`Deployed to ${projectInfo.environment}: ${deployment.url ?? deployment.primaryUrl}`);
   } catch (error) {
+    if (error && typeof error === "object" && "data" in error) {
+      coreExports.debug(JSON.stringify(error.data));
+      coreExports.setFailed(`${JSON.stringify(error.data?.data?.issues || error.data?.statusMessage || error.data?.message || error.data)} - ${error.message}`);
+    }
     if (error instanceof Error) coreExports.setFailed(error.message);
   }
 }

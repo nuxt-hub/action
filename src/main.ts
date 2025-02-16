@@ -263,6 +263,11 @@ export async function run() {
     // #endregion
   }
   catch (error) {
+    if (error && typeof error === 'object' && 'data' in error) {
+      core.debug(JSON.stringify(error.data))
+      // @ts-expect-error untyped error object
+      core.setFailed(`${JSON.stringify(error.data?.data?.issues || error.data?.statusMessage || error.data?.message || error.data)} - ${(error as Error).message}`)
+    }
     if (error instanceof Error) core.setFailed(error.message)
   }
 }
