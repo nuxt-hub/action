@@ -34,14 +34,14 @@
     "@actions/core": "^1.11.1",
     "@github/local-action": "^2.5.1",
     "@nuxt/eslint-config": "^0.7.5",
-    "@types/node": "^22.10.7",
-    "eslint": "^9.18.0",
-    "nuxthub": "^0.8.4",
+    "@types/node": "^22.13.10",
+    "eslint": "^9.22.0",
+    "nuxthub": "^0.8.9",
     "ofetch": "^1.4.1",
     "picocolors": "^1.1.1",
     "pretty-bytes": "^6.1.1",
     "ufo": "^1.5.4",
-    "unbuild": "3.3.1"
+    "unbuild": "3.5.0"
   },
   "engines": {
     "node": ">=20"
