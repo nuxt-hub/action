@@ -49,7 +49,7 @@ export async function run() {
       },
     }).catch((err) => {
       if (err.data?.statusCode === 404) throw new Error('Project not found')
-      core.debug(`Error: ${err.message}`)
+      core.debug(`Error: ${err.data?.message || err.message}`)
       throw err
     })
     accessToken = projectInfo.accessToken
@@ -92,7 +92,7 @@ export async function run() {
     }).catch((err) => {
       if (err.data) {
         core.debug(JSON.stringify(err.data))
-        throw new Error(`Error while preparing deployment: ${JSON.stringify(err.data.data?.issues || err.data.statusMessage || err.data.message || err.data)} - ${err.message}`)
+        throw new Error(`Error while preparing deployment: ${JSON.stringify(err.data.data?.issues || err.data.message || err.data.statusMessage || err.data)} - ${err.message}`)
       }
       else {
         throw new Error(`Error while preparing deployment: ${err.message.split(' - ')[1] || err.message}`)
@@ -246,7 +246,7 @@ export async function run() {
     }).catch((err) => {
       if (err.data) {
         core.debug(JSON.stringify(err.data))
-        throw new Error(`Error while publishing deployment: ${JSON.stringify(err.data.data?.issues || err.data.statusMessage || err.data.message || err.data)} - ${err.message}`)
+        throw new Error(`Error while publishing deployment: ${JSON.stringify(err.data.data?.issues || err.data.message || err.data.statusMessage || err.data)} - ${err.message}`)
       }
       else {
         throw new Error(`Error while publishing deployment: ${err.message.split(' - ')[1] || err.message}`)

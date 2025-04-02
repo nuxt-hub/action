@@ -17,7 +17,7 @@ export async function queryDatabase(options: {
       query: options.query
     }
   }).catch((error) => {
-    throw new Error(`Failed to query database: ${error.message}`)
+    throw new Error(`Failed to query database: ${error.data?.message || error.message}`)
   })
 }
 
