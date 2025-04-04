@@ -13,7 +13,7 @@ export async function run() {
     const directory = core.getInput('directory')
     const hubUrl = core.getInput('hub-url')
 
-    if (projectKeyInput) core.debug(`Linked with: ${projectKeyInput}`)
+    if (projectKeyInput !== undefined) core.debug(`Linked with: \`${projectKeyInput}\``)
     core.debug(`Nuxt output directory: ${directory}`)
     core.debug(`NuxtHub URL: ${hubUrl}`)
 
