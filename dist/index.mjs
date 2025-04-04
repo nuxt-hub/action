@@ -43796,7 +43796,7 @@ async function run() {
     const projectKeyInput = coreExports.getInput("project-key");
     const directory = coreExports.getInput("directory");
     const hubUrl = coreExports.getInput("hub-url");
-    if (projectKeyInput) coreExports.debug(`Linked with: ${projectKeyInput}`);
+    if (projectKeyInput !== void 0) coreExports.debug(`Linked with: \`${projectKeyInput}\``);
     coreExports.debug(`Nuxt output directory: ${directory}`);
     coreExports.debug(`NuxtHub URL: ${hubUrl}`);
     let accessToken = "";
