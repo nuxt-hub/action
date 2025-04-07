@@ -68,7 +68,7 @@ export async function run() {
     const fileKeys = await storage.getKeys()
     const pathsToDeploy = getPathsToDeploy(fileKeys)
     const config = await storage.getItem('hub.config.json')
-    const isWorkerPreset = ['cloudflare_module', 'cloudflare_durable'].includes(config.nitroPreset)
+    const isWorkerPreset = ['cloudflare_module', 'cloudflare_durable', 'cloudflare-module', 'cloudflare-durable'].includes(config.nitroPreset)
     const { format: formatNumber } = new Intl.NumberFormat('en-US')
 
     const publicFiles = await getPublicFiles(storage, pathsToDeploy)
