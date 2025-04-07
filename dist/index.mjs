@@ -287,35 +287,33 @@ function destr(value, options = {}) {
   if (typeof value !== "string") {
     return value;
   }
-  const _value = value.trim();
-  if (
-    // eslint-disable-next-line unicorn/prefer-at
-    value[0] === '"' && value.endsWith('"') && !value.includes("\\")
-  ) {
-    return _value.slice(1, -1);
+  if (value[0] === '"' && value[value.length - 1] === '"' && value.indexOf("\\") === -1) {
+    return value.slice(1, -1);
   }
+  const _value = value.trim();
   if (_value.length <= 9) {
-    const _lval = _value.toLowerCase();
-    if (_lval === "true") {
-      return true;
-    }
-    if (_lval === "false") {
-      return false;
-    }
-    if (_lval === "undefined") {
-      return void 0;
-    }
-    if (_lval === "null") {
-      return null;
-    }
-    if (_lval === "nan") {
-      return Number.NaN;
-    }
-    if (_lval === "infinity") {
-      return Number.POSITIVE_INFINITY;
-    }
-    if (_lval === "-infinity") {
-      return Number.NEGATIVE_INFINITY;
+    switch (_value.toLowerCase()) {
+      case "true": {
+        return true;
+      }
+      case "false": {
+        return false;
+      }
+      case "undefined": {
+        return void 0;
+      }
+      case "null": {
+        return null;
+      }
+      case "nan": {
+        return Number.NaN;
+      }
+      case "infinity": {
+        return Number.POSITIVE_INFINITY;
+      }
+      case "-infinity": {
+        return Number.NEGATIVE_INFINITY;
+      }
     }
   }
   if (!JsonSigRx.test(value)) {
@@ -32875,6 +32873,7 @@ const types$2 = {
     'application/vnd.aristanetworks.swi': ['swi'],
     'application/vnd.astraea-software.iota': ['iota'],
     'application/vnd.audiograph': ['aep'],
+    'application/vnd.autodesk.fbx': ['fbx'],
     'application/vnd.balsamiq.bmml+xml': ['bmml'],
     'application/vnd.blueice.multipass': ['mpm'],
     'application/vnd.bmi': ['bmi'],
@@ -32904,6 +32903,7 @@ const types$2 = {
     'application/vnd.dart': ['dart'],
     'application/vnd.data-vision.rdz': ['rdz'],
     'application/vnd.dbf': ['dbf'],
+    'application/vnd.dcmp+xml': ['dcmp'],
     'application/vnd.dece.data': ['uvf', 'uvvf', 'uvd', 'uvvd'],
     'application/vnd.dece.ttml+xml': ['uvt', 'uvvt'],
     'application/vnd.dece.unspecified': ['uvx', 'uvvx'],
@@ -32955,7 +32955,13 @@ const types$2 = {
     'application/vnd.geospace': ['g3w'],
     'application/vnd.gmx': ['gmx'],
     'application/vnd.google-apps.document': ['gdoc'],
+    'application/vnd.google-apps.drawing': ['gdraw'],
+    'application/vnd.google-apps.form': ['gform'],
+    'application/vnd.google-apps.jam': ['gjam'],
+    'application/vnd.google-apps.map': ['gmap'],
     'application/vnd.google-apps.presentation': ['gslides'],
+    'application/vnd.google-apps.script': ['gscript'],
+    'application/vnd.google-apps.site': ['gsite'],
     'application/vnd.google-apps.spreadsheet': ['gsheet'],
     'application/vnd.google-earth.kml+xml': ['kml'],
     'application/vnd.google-earth.kmz': ['kmz'],
@@ -33066,6 +33072,7 @@ const types$2 = {
     'application/vnd.ms-powerpoint.slideshow.macroenabled.12': ['ppsm'],
     'application/vnd.ms-powerpoint.template.macroenabled.12': ['potm'],
     'application/vnd.ms-project': ['*mpp', 'mpt'],
+    'application/vnd.ms-visio.viewer': ['vdx'],
     'application/vnd.ms-word.document.macroenabled.12': ['docm'],
     'application/vnd.ms-word.template.macroenabled.12': ['dotm'],
     'application/vnd.ms-works': ['wps', 'wks', 'wcm', 'wdb'],
@@ -33145,6 +33152,9 @@ const types$2 = {
     'application/vnd.pocketlearn': ['plf'],
     'application/vnd.powerbuilder6': ['pbd'],
     'application/vnd.previewsystems.box': ['box'],
+    'application/vnd.procrate.brushset': ['brushset'],
+    'application/vnd.procreate.brush': ['brush'],
+    'application/vnd.procreate.dream': ['drm'],
     'application/vnd.proteus.magazine': ['mgz'],
     'application/vnd.publishare-delta-tree': ['qps'],
     'application/vnd.pvi.ptid1': ['ptid'],
@@ -33220,7 +33230,7 @@ const types$2 = {
     'application/vnd.unity': ['unityweb'],
     'application/vnd.uoml+xml': ['uoml', 'uo'],
     'application/vnd.vcx': ['vcx'],
-    'application/vnd.visio': ['vsd', 'vst', 'vss', 'vsw'],
+    'application/vnd.visio': ['vsd', 'vst', 'vss', 'vsw', 'vsdx', 'vtx'],
     'application/vnd.visionary': ['vis'],
     'application/vnd.vsf': ['vsf'],
     'application/vnd.wap.wbxml': ['wbxml'],
@@ -33254,6 +33264,7 @@ const types$2 = {
     'application/x-bcpio': ['bcpio'],
     'application/x-bdoc': ['*bdoc'],
     'application/x-bittorrent': ['torrent'],
+    'application/x-blender': ['blend'],
     'application/x-blorb': ['blb', 'blorb'],
     'application/x-bzip': ['bz'],
     'application/x-bzip2': ['bz2', 'boz'],
@@ -33264,6 +33275,7 @@ const types$2 = {
     'application/x-chess-pgn': ['pgn'],
     'application/x-chrome-extension': ['crx'],
     'application/x-cocoa': ['cco'],
+    'application/x-compressed': ['*rar'],
     'application/x-conference': ['nsc'],
     'application/x-cpio': ['cpio'],
     'application/x-csh': ['csh'],
@@ -33303,6 +33315,7 @@ const types$2 = {
     'application/x-hdf': ['hdf'],
     'application/x-httpd-php': ['php'],
     'application/x-install-instructions': ['install'],
+    'application/x-ipynb+json': ['ipynb'],
     'application/x-iso9660-image': ['*iso'],
     'application/x-iwork-keynote-sffkey': ['*key'],
     'application/x-iwork-numbers-sffnumbers': ['*numbers'],
@@ -33380,6 +33393,7 @@ const types$2 = {
     'application/x-xliff+xml': ['*xlf'],
     'application/x-xpinstall': ['xpi'],
     'application/x-xz': ['xz'],
+    'application/x-zip-compressed': ['*zip'],
     'application/x-zmachine': ['z1', 'z2', 'z3', 'z4', 'z5', 'z6', 'z7', 'z8'],
     'audio/vnd.dece.audio': ['uva', 'uvva'],
     'audio/vnd.digital-winds': ['eol'],
@@ -33437,6 +33451,7 @@ const types$2 = {
     'image/vnd.xiff': ['xif'],
     'image/vnd.zbrush.pcx': ['pcx'],
     'image/x-3ds': ['3ds'],
+    'image/x-adobe-dng': ['dng'],
     'image/x-cmu-raster': ['ras'],
     'image/x-cmx': ['cmx'],
     'image/x-freehand': ['fh', 'fhc', 'fh4', 'fh5', 'fh7'],
@@ -33568,6 +33583,7 @@ const types$1 = {
     'application/dash+xml': ['mpd'],
     'application/dash-patch+xml': ['mpp'],
     'application/davmount+xml': ['davmount'],
+    'application/dicom': ['dcm'],
     'application/docbook+xml': ['dbk'],
     'application/dssc+der': ['dssc'],
     'application/dssc+xml': ['xdssc'],
@@ -33654,7 +33670,14 @@ const types$1 = {
     'application/oebps-package+xml': ['opf'],
     'application/ogg': ['ogx'],
     'application/omdoc+xml': ['omdoc'],
-    'application/onenote': ['onetoc', 'onetoc2', 'onetmp', 'onepkg'],
+    'application/onenote': [
+        'onetoc',
+        'onetoc2',
+        'onetmp',
+        'onepkg',
+        'one',
+        'onea',
+    ],
     'application/oxps': ['oxps'],
     'application/p2p-overlay+xml': ['relo'],
     'application/patch-ops-error+xml': ['xer'],
@@ -33750,6 +33773,7 @@ const types$1 = {
     'application/yang': ['yang'],
     'application/yin+xml': ['yin'],
     'application/zip': ['zip'],
+    'application/zip+dotlottie': ['lottie'],
     'audio/3gpp': ['*3gpp'],
     'audio/aac': ['adts', 'aac'],
     'audio/adpcm': ['adp'],
@@ -33758,7 +33782,7 @@ const types$1 = {
     'audio/midi': ['mid', 'midi', 'kar', 'rmi'],
     'audio/mobile-xmf': ['mxmf'],
     'audio/mp3': ['*mp3'],
-    'audio/mp4': ['m4a', 'mp4a'],
+    'audio/mp4': ['m4a', 'mp4a', 'm4b'],
     'audio/mpeg': ['mpga', 'mp2', 'mp2a', 'mp3', 'm2a', 'm3a'],
     'audio/ogg': ['oga', 'ogg', 'spx', 'opus'],
     'audio/s3m': ['s3m'],
@@ -33790,11 +33814,12 @@ const types$1 = {
     'image/heif': ['heif'],
     'image/heif-sequence': ['heifs'],
     'image/hej2k': ['hej2'],
-    'image/hsj2': ['hsj2'],
     'image/ief': ['ief'],
+    'image/jaii': ['jaii'],
+    'image/jais': ['jais'],
     'image/jls': ['jls'],
     'image/jp2': ['jp2', 'jpg2'],
-    'image/jpeg': ['jpeg', 'jpg', 'jpe'],
+    'image/jpeg': ['jpg', 'jpeg', 'jpe'],
     'image/jph': ['jph'],
     'image/jphc': ['jhc'],
     'image/jpm': ['jpm', 'jpgm'],
@@ -33809,6 +33834,7 @@ const types$1 = {
     'image/jxss': ['jxss'],
     'image/ktx': ['ktx'],
     'image/ktx2': ['ktx2'],
+    'image/pjpeg': ['jfif'],
     'image/png': ['png'],
     'image/sgi': ['sgi'],
     'image/svg+xml': ['svg', 'svgz'],
@@ -33822,7 +33848,7 @@ const types$1 = {
     'message/global-delivery-status': ['u8dsn'],
     'message/global-disposition-notification': ['u8mdn'],
     'message/global-headers': ['u8hdr'],
-    'message/rfc822': ['eml', 'mime'],
+    'message/rfc822': ['eml', 'mime', 'mht', 'mhtml'],
     'model/3mf': ['3mf'],
     'model/gltf+json': ['gltf'],
     'model/gltf-binary': ['glb'],
@@ -33832,6 +33858,7 @@ const types$1 = {
     'model/mtl': ['mtl'],
     'model/obj': ['obj'],
     'model/prc': ['prc'],
+    'model/step': ['step', 'stp', 'stpnc', 'p21', '210'],
     'model/step+xml': ['stpx'],
     'model/step+zip': ['stpz'],
     'model/step-xml+zip': ['stpxz'],
@@ -33938,8 +33965,8 @@ class Mime {
     getType(path) {
         if (typeof path !== 'string')
             return null;
-        const last = path.replace(/^.*[/\\]/, '').toLowerCase();
-        const ext = last.replace(/^.*\./, '').toLowerCase();
+        const last = path.replace(/^.*[/\\]/s, '').toLowerCase();
+        const ext = last.replace(/^.*\./s, '').toLowerCase();
         const hasPath = last.length < path.length;
         const hasDot = ext.length < last.length - 1;
         if (!hasDot && hasPath)
