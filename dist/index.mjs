@@ -43714,11 +43714,17 @@ const META_PATHS = [
   '/nitro.json',
   '/hub.config.json',
   '/wrangler.toml',
+  '/package-lock.json',
+  '/package.json'
 ];
 
 const isMetaPath = (path) => META_PATHS.includes(path);
 const isServerPath = (path) => path.startsWith('/_worker.js/');
 const isPublicPath = (path) => !isMetaPath(path) && !isServerPath(path);
+
+const isWorkerMetaPath = (path) => META_PATHS.includes(path);
+const isWorkerPublicPath = (path) => path.startsWith('/public/');
+const isWorkerServerPath = (path) => path.startsWith('/server/');
 
 /**
  * Get all public files with their metadata
@@ -43731,9 +43737,18 @@ async function getPublicFiles(storage, paths) {
     paths.filter(isPublicPath).map(p => getFile(storage, p, 'base64'))
   )
 }
+async function getWorkerPublicFiles(storage, paths) {
+  const files = await Promise.all(
+    paths.filter(isWorkerPublicPath).map(p => getFile(storage, p, 'base64'))
+  );
+  return files.map((file) => ({
+    ...file,
+    path: file.path.replace('/public/', '/')
+  }))
+}
 
 /**
- * Upload assets to Cloudflare with concurrent uploads
+ * Upload assets to Cloudflare Pages with concurrent uploads
  * @param {Array<{ path: string, data: string, hash: string, contentType: string }>} files - Files to upload
  * @param {string} cloudflareUploadJwt - Cloudflare upload JWT
  * @param {Function} onProgress - Callback function to update progress
@@ -43788,7 +43803,64 @@ async function uploadAssetsToCloudflare(files, cloudflareUploadJwt, onProgress) 
   }
 }
 
-// async function uploadToCloudflare(body, cloudflareUploadJwt) {
+
+/**
+ * Upload assets to Cloudflare Workers with concurrent uploads
+ * @param {Array<string<string>} buckets - Buckets of hashes to upload
+ * @param {Array<{ path: string, data: string, hash: string, contentType: string }>} files - Files to upload
+ * @param {string} cloudflareUploadJwt - Cloudflare upload JWT
+ * @param {Function} onProgress - Callback function to update progress
+ */
+async function uploadWorkersAssetsToCloudflare(accountId, files, cloudflareUploadJwt, onProgress) {
+  const chunks = await createChunks(files);
+  if (!chunks.length) {
+    return
+  }
+
+  let filesUploaded = 0;
+  let progressSize = 0;
+  let completionToken;
+  const totalSize = files.reduce((acc, file) => acc + file.size, 0);
+  for (let i = 0; i < chunks.length; i += CONCURRENT_UPLOADS) {
+    const chunkGroup = chunks.slice(i, i + CONCURRENT_UPLOADS);
+
+    await Promise.all(chunkGroup.map(async (filesInChunk) => {
+      const form = new FormData();
+      for (const file of filesInChunk) {
+        form.append(file.hash, new File([file.data], file.hash, { type: file.contentType}), file.hash);
+      }
+      return ofetch(`/accounts/${accountId}/workers/assets/upload?base64=true`, {
+        baseURL: 'https://api.cloudflare.com/client/v4/',
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${cloudflareUploadJwt}`
+        },
+        retry: MAX_UPLOAD_ATTEMPTS,
+        retryDelay: UPLOAD_RETRY_DELAY,
+        body: form
+      })
+      .then((data) => {
+        if (data && data.result?.jwt) {
+          completionToken = data.result.jwt;
+        }
+        if (typeof onProgress === 'function') {
+          filesUploaded += filesInChunk.length;
+          progressSize += filesInChunk.reduce((acc, file) => acc + file.size, 0);
+          onProgress({ progress: filesUploaded, progressSize, total: files.length, totalSize });
+        }
+      })
+      .catch((err) => {
+        if (err.data) {
+          throw new Error(`Error while uploading assets to Cloudflare: ${JSON.stringify(err.data)} - ${err.message}`)
+        }
+        else {
+          throw new Error(`Error while uploading assets to Cloudflare: ${err.message.split(' - ')[1] || err.message}`)
+        }
+      })
+    }));
+  }
+  return completionToken
+}
 
 async function queryDatabase(options) {
   return await ofetch(`${options.hubUrl}/api/projects/${options.projectKey}/database/${options.env}/query`, {
@@ -43858,44 +43930,65 @@ async function run() {
     const fileKeys = await storage.getKeys();
     const pathsToDeploy = getPathsToDeploy(fileKeys);
     const config = await storage.getItem("hub.config.json");
+    const isWorkerPreset = ["cloudflare_module", "cloudflare_durable"].includes(config.nitroPreset);
     const { format: formatNumber } = new Intl.NumberFormat("en-US");
     const publicFiles = await getPublicFiles(storage, pathsToDeploy);
     coreExports.debug("Preparing deployment...");
-    const deploymentInfo = await $api(`/teams/${projectInfo.teamSlug}/projects/${projectInfo.projectSlug}/${projectInfo.environment}/deploy/prepare`, {
-      method: "POST",
-      body: {
-        config,
-        /**
-         * Public manifest is a map of file paths to their unique hash (SHA256 sliced to 32 characters).
-         * @example
-         * {
-         *   "/index.html": "hash",
-         *   "/assets/image.png": "hash"
-         * }
-         */
-        publicManifest: publicFiles.reduce((acc, file) => {
+    let deploymentInfo;
+    try {
+      let prepareUrl = `/teams/${projectInfo.teamSlug}/projects/${projectInfo.projectSlug}/${projectInfo.environment}/deploy/prepare`;
+      let publicFiles2, publicManifest;
+      if (isWorkerPreset) {
+        prepareUrl = `/teams/${projectInfo.teamSlug}/projects/${projectInfo.projectSlug}/${projectInfo.environment}/deploy/worker/prepare`;
+        publicFiles2 = await getWorkerPublicFiles(storage, pathsToDeploy);
+        publicManifest = publicFiles2.reduce((acc, file) => {
+          acc[file.path] = {
+            hash: file.hash,
+            size: file.size
+          };
+          return acc;
+        }, {});
+      } else {
+        publicFiles2 = await getPublicFiles(storage, pathsToDeploy);
+        publicManifest = publicFiles2.reduce((acc, file) => {
           acc[file.path] = file.hash;
           return acc;
-        }, {})
+        }, {});
       }
-    }).catch((err) => {
+      deploymentInfo = await $api(prepareUrl, {
+        method: "POST",
+        body: {
+          config,
+          publicManifest
+        }
+      });
+    } catch (err) {
       if (err.data) {
         coreExports.debug(JSON.stringify(err.data));
         throw new Error(`Error while preparing deployment: ${JSON.stringify(err.data.data?.issues || err.data.message || err.data.statusMessage || err.data)} - ${err.message}`);
       } else {
         throw new Error(`Error while preparing deployment: ${err.message.split(" - ")[1] || err.message}`);
       }
-    });
-    const { deploymentKey, missingPublicHashes, cloudflareUploadJwt } = deploymentInfo;
+    }
+    const { deploymentKey, buckets, cloudflareUploadJwt, accountId } = deploymentInfo;
+    let missingPublicHashes = deploymentInfo.missingPublicHashes || buckets.flat();
     const publicFilesToUpload = publicFiles.filter((file) => missingPublicHashes.includes(file.hash));
-    coreExports.debug("Uploading assets to Cloudflare...");
+    coreExports.info("Uploading assets to Cloudflare...");
+    let completionToken;
     if (publicFilesToUpload.length) {
       const totalSizeToUpload = publicFilesToUpload.reduce((acc, file) => acc + file.size, 0);
-      coreExports.debug(`Uploading ${colors$1.blueBright(formatNumber(publicFilesToUpload.length))} new static assets (${colors$1.blueBright(prettyBytes(totalSizeToUpload))})...`);
-      await uploadAssetsToCloudflare(publicFilesToUpload, cloudflareUploadJwt, ({ progressSize, totalSize }) => {
-        const percentage = Math.round(progressSize / totalSize * 100);
-        coreExports.debug(`${percentage}% uploaded (${prettyBytes(progressSize)}/${prettyBytes(totalSize)})`);
-      });
+      coreExports.info(`Uploading ${colors$1.blueBright(formatNumber(publicFilesToUpload.length))} new static assets (${colors$1.blueBright(prettyBytes(totalSizeToUpload))})...`);
+      if (projectInfo.type === "pages") {
+        await uploadAssetsToCloudflare(publicFilesToUpload, cloudflareUploadJwt, ({ progressSize, totalSize }) => {
+          const percentage = Math.round(progressSize / totalSize * 100);
+          coreExports.info(`${percentage}% uploaded (${prettyBytes(progressSize)}/${prettyBytes(totalSize)})`);
+        });
+      } else {
+        completionToken = await uploadWorkersAssetsToCloudflare(accountId, publicFilesToUpload, cloudflareUploadJwt, ({ progressSize, totalSize }) => {
+          const percentage = Math.round(progressSize / totalSize * 100);
+          coreExports.info(`${percentage}% uploaded (${prettyBytes(progressSize)}/${prettyBytes(totalSize)})`);
+        });
+      }
       coreExports.info(`${colors$1.blueBright(formatNumber(publicFilesToUpload.length))} new static assets uploaded (${colors$1.blueBright(prettyBytes(totalSizeToUpload))})`);
     }
     if (publicFiles.length) {
@@ -43903,19 +43996,25 @@ async function run() {
       const totalGzipSize = publicFiles.reduce((acc, file) => acc + file.gzipSize, 0);
       coreExports.info(`${colors$1.blueBright(formatNumber(publicFiles.length))} static assets (${colors$1.blueBright(prettyBytes(totalSize))} / ${colors$1.blueBright(prettyBytes(totalGzipSize))} gzip)`);
     }
-    const metaFiles = await Promise.all(pathsToDeploy.filter(isMetaPath).map((p) => getFile(storage, p, "base64")));
-    const serverFiles = await Promise.all(pathsToDeploy.filter(isServerPath).map((p) => getFile(storage, p, "base64")));
+    const metaFiles = await Promise.all(pathsToDeploy.filter(isWorkerPreset ? isWorkerMetaPath : isMetaPath).map((p) => getFile(storage, p, "base64")));
+    let serverFiles = await Promise.all(pathsToDeploy.filter(isWorkerPreset ? isWorkerServerPath : isServerPath).map((p) => getFile(storage, p, "base64")));
+    if (isWorkerPreset) {
+      serverFiles = serverFiles.map((file) => ({
+        ...file,
+        path: file.path.replace("/server/", "/")
+      }));
+    }
     const serverFilesSize = serverFiles.reduce((acc, file) => acc + file.size, 0);
     const serverFilesGzipSize = serverFiles.reduce((acc, file) => acc + file.gzipSize, 0);
     coreExports.info(`${colors$1.blueBright(formatNumber(serverFiles.length))} server files (${colors$1.blueBright(prettyBytes(serverFilesSize))} / ${colors$1.blueBright(prettyBytes(serverFilesGzipSize))} gzip)`);
     if (!config.database) {
-      coreExports.debug("Skipping database migrations and queries - database not enabled in config");
+      coreExports.info("Skipping database migrations and queries - database not enabled in config");
     }
     if (config.database) {
       coreExports.info("Processing database migrations...");
       const localMigrations = fileKeys.filter((fileKey) => fileKey.startsWith("database:migrations:") && fileKey.endsWith(".sql")).map((fileKey) => fileKey.replace("database:migrations:", "").replace(".sql", ""));
       if (!localMigrations.length) {
-        coreExports.debug(`Skipping database migrations - no database migrations found in ${colors$1.blueBright(`${directory}/database/migrations`)}`);
+        coreExports.info(`Skipping database migrations - no database migrations found in ${colors$1.blueBright(`${directory}/database/migrations`)}`);
         coreExports.info("No pending migrations to apply");
       }
       if (localMigrations.length) {
@@ -43940,7 +44039,7 @@ async function run() {
           let query = await storage.getItem(`database/migrations/${queryName}.sql`);
           if (query.at(-1) !== ";") query += ";";
           query += `INSERT INTO _hub_migrations (name) values ('${queryName}');`;
-          coreExports.debug(`Applying database migration ${colors$1.blueBright(queryName)}...`);
+          coreExports.info(`Applying database migration ${colors$1.blueBright(queryName)}...`);
           coreExports.debug(query);
           try {
             await queryDatabase({
@@ -43964,13 +44063,13 @@ async function run() {
       }
       const localQueries = fileKeys.filter((fileKey) => fileKey.startsWith("database:queries:") && fileKey.endsWith(".sql")).map((fileKey) => fileKey.replace("database:queries:", "").replace(".sql", ""));
       if (!localQueries.length) {
-        coreExports.debug(`Skipping database queries - no database queries found in ${colors$1.blueBright(`${directory}/database/queries`)}`);
+        coreExports.info(`Skipping database queries - no database queries found in ${colors$1.blueBright(`${directory}/database/queries`)}`);
       }
       if (localQueries.length) {
         coreExports.info(`Applying ${colors$1.blueBright(formatNumber(localQueries.length))} database ${localQueries.length === 1 ? "query" : "queries"}...`);
         for (const queryName of localQueries) {
           const query = await storage.getItem(`database/queries/${queryName}.sql`);
-          coreExports.debug(`Applying database query ${colors$1.blueBright(queryName)}...`);
+          coreExports.info(`Applying database query ${colors$1.blueBright(queryName)}...`);
           coreExports.debug(query);
           try {
             await queryDatabase({
@@ -43993,13 +44092,14 @@ async function run() {
         coreExports.info(`${colors$1.blueBright(formatNumber(localQueries.length))} database ${localQueries.length === 1 ? "query" : "queries"} applied`);
       }
     }
-    coreExports.debug(`Publishing deployment...`);
-    const deployment = await $api(`/teams/${projectInfo.teamSlug}/projects/${projectInfo.projectSlug}/${projectInfo.environment}/deploy/complete`, {
+    coreExports.info(`Publishing deployment...`);
+    const deployment = await $api(`/teams/${projectInfo.teamSlug}/projects/${projectInfo.projectSlug}/${projectInfo.environment}/deploy/${isWorkerPreset ? "worker/complete" : "complete"}`, {
       method: "POST",
       body: {
         deploymentKey,
         serverFiles,
-        metaFiles
+        metaFiles,
+        completionToken
       }
     }).catch((err) => {
       if (err.data) {
