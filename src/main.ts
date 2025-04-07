@@ -130,7 +130,7 @@ export async function run() {
 
     const publicFilesToUpload = publicFiles.filter(file => missingPublicHashes.includes(file.hash))
 
-    core.info('Uploading assets to Cloudflare...')
+    core.debug('Uploading assets to Cloudflare...')
     let completionToken
     if (publicFilesToUpload.length) {
       const totalSizeToUpload = publicFilesToUpload.reduce((acc, file) => acc + file.size, 0)

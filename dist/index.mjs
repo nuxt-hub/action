@@ -43973,7 +43973,7 @@ async function run() {
     const { deploymentKey, buckets, cloudflareUploadJwt, accountId } = deploymentInfo;
     let missingPublicHashes = deploymentInfo.missingPublicHashes || buckets.flat();
     const publicFilesToUpload = publicFiles.filter((file) => missingPublicHashes.includes(file.hash));
-    coreExports.info("Uploading assets to Cloudflare...");
+    coreExports.debug("Uploading assets to Cloudflare...");
     let completionToken;
     if (publicFilesToUpload.length) {
       const totalSizeToUpload = publicFilesToUpload.reduce((acc, file) => acc + file.size, 0);
