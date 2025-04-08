@@ -43930,6 +43930,9 @@ async function run() {
     const fileKeys = await storage.getKeys();
     const pathsToDeploy = getPathsToDeploy(fileKeys);
     const config = await storage.getItem("hub.config.json");
+    if (!config.nitroPreset && projectInfo.type === "worker") {
+      throw new Error("Please upgrade `@nuxthub/core` to the latest version to deploy to a worker project.");
+    }
     const isWorkerPreset = ["cloudflare_module", "cloudflare_durable", "cloudflare-module", "cloudflare-durable"].includes(config.nitroPreset);
     const { format: formatNumber } = new Intl.NumberFormat("en-US");
     const publicFiles = await getPublicFiles(storage, pathsToDeploy);
