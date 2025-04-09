@@ -58,6 +58,10 @@ export async function run() {
     core.setSecret(projectInfo.accessToken)
     core.debug(`Retrieved project info ${JSON.stringify(projectInfo)}`)
 
+    if (projectInfo.type === 'worker' && projectInfo.environment === 'preview') {
+      throw new Error('Currently NuxtHub on Workers (BETA) does not support preview environments.')
+    }
+
     core.info(`Deploying ${colors.blueBright(projectInfo.projectSlug)} to ${colors.blueBright(projectInfo.environment)} environment...`)
     // #endregion
 

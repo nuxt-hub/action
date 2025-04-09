@@ -43924,6 +43924,9 @@ async function run() {
     const projectKey = projectInfo.projectKey;
     coreExports.setSecret(projectInfo.accessToken);
     coreExports.debug(`Retrieved project info ${JSON.stringify(projectInfo)}`);
+    if (projectInfo.type === "worker" && projectInfo.environment === "preview") {
+      throw new Error("Currently NuxtHub on Workers (BETA) does not support preview environments.");
+    }
     coreExports.info(`Deploying ${colors$1.blueBright(projectInfo.projectSlug)} to ${colors$1.blueBright(projectInfo.environment)} environment...`);
     coreExports.debug(`Processing files in ${directory}...`);
     const storage = await getStorage(directory);
