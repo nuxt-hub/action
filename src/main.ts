@@ -3,7 +3,7 @@ import { ofetch } from 'ofetch'
 import colors from "picocolors"
 import prettyBytes from 'pretty-bytes'
 import * as core from '@actions/core'
-import { getStorage, getPathsToDeploy, getFile, uploadAssetsToCloudflare, isMetaPath, isServerPath, getPublicFiles } from 'nuxthub/internal'
+import { getStorage, getPathsToDeploy, getFile, uploadAssetsToCloudflare, uploadWorkersAssetsToCloudflare, isMetaPath, isWorkerMetaPath, isServerPath, isWorkerServerPath, getPublicFiles, getWorkerPublicFiles } from 'nuxthub/internal'
 import { createMigrationsTable, fetchRemoteMigrations, queryDatabase } from './database.js'
 import { join } from 'node:path'
 
@@ -42,6 +42,7 @@ export async function run() {
       teamSlug: string
       projectSlug: string
       projectKey: string
+      type: 'pages' | 'worker'
       environment: 'production' | 'preview'
     }>(`/ci-cd/token`, {
       headers: {
@@ -57,6 +58,10 @@ export async function run() {
     core.setSecret(projectInfo.accessToken)
     core.debug(`Retrieved project info ${JSON.stringify(projectInfo)}`)
 
+    if (projectInfo.type === 'worker' && projectInfo.environment === 'preview') {
+      throw new Error('Currently NuxtHub on Workers (BETA) does not support preview environments.')
+    }
+
     core.info(`Deploying ${colors.blueBright(projectInfo.projectSlug)} to ${colors.blueBright(projectInfo.environment)} environment...`)
     // #endregion
 
@@ -67,29 +72,56 @@ export async function run() {
     const fileKeys = await storage.getKeys()
     const pathsToDeploy = getPathsToDeploy(fileKeys)
     const config = await storage.getItem('hub.config.json')
+    if (!config.nitroPreset && projectInfo.type === 'worker') {
+      throw new Error('Please upgrade `@nuxthub/core` to the latest version to deploy to a worker project.')
+    }
+    const isWorkerPreset = ['cloudflare_module', 'cloudflare_durable', 'cloudflare-module', 'cloudflare-durable'].includes(config.nitroPreset)
     const { format: formatNumber } = new Intl.NumberFormat('en-US')
 
     const publicFiles = await getPublicFiles(storage, pathsToDeploy)
 
     core.debug('Preparing deployment...')
-    const deploymentInfo = await $api(`/teams/${projectInfo.teamSlug}/projects/${projectInfo.projectSlug}/${projectInfo.environment}/deploy/prepare`, {
-      method: 'POST',
-      body: {
-        config,
+    let deploymentInfo
+    try {
+      let prepareUrl = `/teams/${projectInfo.teamSlug}/projects/${projectInfo.projectSlug}/${projectInfo.environment}/deploy/prepare`
+      let publicFiles, publicManifest
+
+      if (isWorkerPreset) {
+        // Workers
+        prepareUrl = `/teams/${projectInfo.teamSlug}/projects/${projectInfo.projectSlug}/${projectInfo.environment}/deploy/worker/prepare`
+        publicFiles = await getWorkerPublicFiles(storage, pathsToDeploy)
         /**
-         * Public manifest is a map of file paths to their unique hash (SHA256 sliced to 32 characters).
-         * @example
-         * {
-         *   "/index.html": "hash",
-         *   "/assets/image.png": "hash"
-         * }
+         * {  "/index.html": { hash: "hash", size: 30 }
          */
-        publicManifest: publicFiles.reduce((acc, file) => {
+        publicManifest = publicFiles.reduce((acc, file) => {
+          acc[file.path] = {
+            hash: file.hash,
+            size: file.size
+          }
+          return acc
+        }, {})
+      } else {
+        // Pages
+        publicFiles = await getPublicFiles(storage, pathsToDeploy)
+        /**
+         * {  "/index.html": "hash" }
+         */
+        publicManifest = publicFiles.reduce((acc, file) => {
           acc[file.path] = file.hash
           return acc
         }, {})
       }
-    }).catch((err) => {
+
+      // Get deployment info by preparing the deployment
+      deploymentInfo = await $api(prepareUrl, {
+        method: 'POST',
+        body: {
+          config,
+          publicManifest
+        }
+      })
+
+    } catch (err) {
       if (err.data) {
         core.debug(JSON.stringify(err.data))
         throw new Error(`Error while preparing deployment: ${JSON.stringify(err.data.data?.issues || err.data.message || err.data.statusMessage || err.data)} - ${err.message}`)
@@ -97,18 +129,33 @@ export async function run() {
       else {
         throw new Error(`Error while preparing deployment: ${err.message.split(' - ')[1] || err.message}`)
       }
-    })
-    const { deploymentKey, missingPublicHashes, cloudflareUploadJwt } = deploymentInfo
+    }
+
+    const { deploymentKey, buckets, cloudflareUploadJwt, accountId } = deploymentInfo
+    // missingPublicHash is sent for pages & buckets for worker
+      let missingPublicHashes = deploymentInfo.missingPublicHashes || buckets.flat()
+
     const publicFilesToUpload = publicFiles.filter(file => missingPublicHashes.includes(file.hash))
 
     core.debug('Uploading assets to Cloudflare...')
+    let completionToken
     if (publicFilesToUpload.length) {
       const totalSizeToUpload = publicFilesToUpload.reduce((acc, file) => acc + file.size, 0)
-      core.debug(`Uploading ${colors.blueBright(formatNumber(publicFilesToUpload.length))} new static assets (${colors.blueBright(prettyBytes(totalSizeToUpload))})...`)
-      await uploadAssetsToCloudflare(publicFilesToUpload, cloudflareUploadJwt, ({ progressSize, totalSize }) => {
-        const percentage = Math.round((progressSize / totalSize) * 100)
-        core.debug(`${percentage}% uploaded (${prettyBytes(progressSize)}/${prettyBytes(totalSize)})`)
-      })
+      core.info(`Uploading ${colors.blueBright(formatNumber(publicFilesToUpload.length))} new static assets (${colors.blueBright(prettyBytes(totalSizeToUpload))})...`)
+
+      if (projectInfo.type === 'pages') {
+        await uploadAssetsToCloudflare(publicFilesToUpload, cloudflareUploadJwt, ({ progressSize, totalSize }) => {
+          const percentage = Math.round((progressSize / totalSize) * 100)
+          core.info(`${percentage}% uploaded (${prettyBytes(progressSize)}/${prettyBytes(totalSize)})`)
+        })
+      } else {
+        completionToken = await uploadWorkersAssetsToCloudflare(accountId, publicFilesToUpload, cloudflareUploadJwt, ({ progressSize, totalSize }) => {
+          const percentage = Math.round((progressSize / totalSize) * 100)
+          core.info(`${percentage}% uploaded (${prettyBytes(progressSize)}/${prettyBytes(totalSize)})`)
+        })
+      }
+
+
       core.info(`${colors.blueBright(formatNumber(publicFilesToUpload.length))} new static assets uploaded (${colors.blueBright(prettyBytes(totalSizeToUpload))})`)
     }
 
@@ -118,8 +165,15 @@ export async function run() {
       core.info(`${colors.blueBright(formatNumber(publicFiles.length))} static assets (${colors.blueBright(prettyBytes(totalSize))} / ${colors.blueBright(prettyBytes(totalGzipSize))} gzip)`)
     }
 
-    const metaFiles = await Promise.all(pathsToDeploy.filter(isMetaPath).map(p => getFile(storage, p, 'base64')))
-    const serverFiles = await Promise.all(pathsToDeploy.filter(isServerPath).map(p => getFile(storage, p, 'base64')))
+    const metaFiles = await Promise.all(pathsToDeploy.filter(isWorkerPreset ? isWorkerMetaPath : isMetaPath).map(p => getFile(storage, p, 'base64')))
+    let serverFiles = await Promise.all(pathsToDeploy.filter(isWorkerPreset ? isWorkerServerPath : isServerPath).map(p => getFile(storage, p, 'base64')))
+    if (isWorkerPreset) {
+      serverFiles = serverFiles.map(file => ({
+        ...file,
+        path: file.path.replace('/server/', '/')
+      }))
+    }
+
     const serverFilesSize = serverFiles.reduce((acc, file) => acc + file.size, 0)
     const serverFilesGzipSize = serverFiles.reduce((acc, file) => acc + file.gzipSize, 0)
     core.info(`${colors.blueBright(formatNumber(serverFiles.length))} server files (${colors.blueBright(prettyBytes(serverFilesSize))} / ${colors.blueBright(prettyBytes(serverFilesGzipSize))} gzip)`)
@@ -127,7 +181,7 @@ export async function run() {
 
     // #region Database migrations
     if (!config.database) {
-      core.debug('Skipping database migrations and queries - database not enabled in config')
+      core.info('Skipping database migrations and queries - database not enabled in config')
     }
 
     if (config.database) {
@@ -137,7 +191,7 @@ export async function run() {
         .filter(fileKey => fileKey.startsWith('database:migrations:') && fileKey.endsWith('.sql'))
         .map(fileKey => fileKey.replace('database:migrations:', '').replace('.sql', ''))
       if (!localMigrations.length) {
-        core.debug(`Skipping database migrations - no database migrations found in ${colors.blueBright(`${directory}/database/migrations`)}`)
+        core.info(`Skipping database migrations - no database migrations found in ${colors.blueBright(`${directory}/database/migrations`)}`)
         core.info('No pending migrations to apply')
       }
 
@@ -168,7 +222,7 @@ export async function run() {
           if (query.at(-1) !== ';') query += ';'
           query += `INSERT INTO _hub_migrations (name) values ('${queryName}');`
 
-          core.debug(`Applying database migration ${colors.blueBright(queryName)}...`)
+          core.info(`Applying database migration ${colors.blueBright(queryName)}...`)
           core.debug(query)
 
           try {
@@ -199,7 +253,7 @@ export async function run() {
         .filter(fileKey => fileKey.startsWith('database:queries:') && fileKey.endsWith('.sql'))
         .map(fileKey => fileKey.replace('database:queries:', '').replace('.sql', ''))
       if (!localQueries.length) {
-        core.debug(`Skipping database queries - no database queries found in ${colors.blueBright(`${directory}/database/queries`)}`)
+        core.info(`Skipping database queries - no database queries found in ${colors.blueBright(`${directory}/database/queries`)}`)
       }
 
       if (localQueries.length) {
@@ -207,7 +261,7 @@ export async function run() {
         for (const queryName of localQueries) {
           const query = await storage.getItem(`database/queries/${queryName}.sql`)
 
-          core.debug(`Applying database query ${colors.blueBright(queryName)}...`)
+          core.info(`Applying database query ${colors.blueBright(queryName)}...`)
           core.debug(query)
 
           try {
@@ -235,13 +289,14 @@ export async function run() {
     }
 
     // #region Complete deployment
-    core.debug(`Publishing deployment...`)
-    const deployment = await $api(`/teams/${projectInfo.teamSlug}/projects/${projectInfo.projectSlug}/${projectInfo.environment}/deploy/complete`, {
+    core.info(`Publishing deployment...`)
+    const deployment = await $api(`/teams/${projectInfo.teamSlug}/projects/${projectInfo.projectSlug}/${projectInfo.environment}/deploy/${isWorkerPreset ? 'worker/complete' : 'complete'}`, {
       method: 'POST',
       body: {
         deploymentKey,
         serverFiles,
-        metaFiles
+        metaFiles,
+        completionToken
       },
     }).catch((err) => {
       if (err.data) {
