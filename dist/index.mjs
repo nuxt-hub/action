@@ -34699,7 +34699,7 @@ function readUser(options) {
 var main$1 = {exports: {}};
 
 const name = "dotenv";
-const version = "16.4.7";
+const version = "16.5.0";
 const description = "Loads environment variables from .env file";
 const main = "lib/main.js";
 const types = "lib/main.d.ts";
@@ -34730,6 +34730,7 @@ const repository = {
 	type: "git",
 	url: "git://github.com/motdotla/dotenv.git"
 };
+const homepage = "https://github.com/motdotla/dotenv#readme";
 const funding = "https://dotenvx.com";
 const keywords = [
 	"dotenv",
@@ -34766,6 +34767,7 @@ const _package = {
 	exports: exports,
 	scripts: scripts,
 	repository: repository,
+	homepage: homepage,
 	funding: funding,
 	keywords: keywords,
 	readmeFilename: readmeFilename,
@@ -34784,6 +34786,7 @@ const _package$1 = {
   engines: engines,
   exports: exports,
   funding: funding,
+  homepage: homepage,
   keywords: keywords,
   license: license,
   main: main,
@@ -34893,10 +34896,6 @@ function requireMain () {
 	  return DotenvModule.parse(decrypted)
 	}
 
-	function _log (message) {
-	  console.log(`[dotenv@${version}][INFO] ${message}`);
-	}
-
 	function _warn (message) {
 	  console.log(`[dotenv@${version}][WARN] ${message}`);
 	}
@@ -34992,7 +34991,10 @@ function requireMain () {
 	}
 
 	function _configVault (options) {
-	  _log('Loading env from encrypted .env.vault');
+	  const debug = Boolean(options && options.debug);
+	  if (debug) {
+	    _debug('Loading env from encrypted .env.vault');
+	  }
 
 	  const parsed = DotenvModule._parseVault(options);
 
