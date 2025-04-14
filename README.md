@@ -88,7 +88,7 @@ pnpm run bundle
 ### Development
 
 1. Update `src/`
-1. Format, test, and build the action
+2. Format, test, and build the action
 
    ```bash
    pnpm run bundle
@@ -96,35 +96,6 @@ pnpm run bundle
 
    > It will run [`unbuild`](https://github.com/unjs/unbuild)
    > to build the final JavaScript action code with all dependencies included.
-
-1. (Optional) Test the action locally
-
-   The [`@github/local-action`](https://github.com/github/local-action) utility
-   can be used to test your action locally. It is a simple command-line tool
-   that "stubs" (or simulates) the GitHub Actions Toolkit. This way, you can run
-   your TypeScript action locally without having to commit and push your changes
-   to a repository.
-
-   The `local-action` utility can be run in the following ways:
-
-   - Visual Studio Code Debugger
-
-     Make sure to review and, if needed, update
-     [`.vscode/launch.json`](./.vscode/launch.json)
-
-   - Terminal/Command Prompt
-
-     ```bash
-     # pnpm local-action <action-yaml-path> <entrypoint> <dotenv-file>
-     pnpm local-action . src/main.ts .env
-     ```
-
-   You can provide a `.env` file to the `local-action` CLI to set environment
-   variables used by the GitHub Actions Toolkit. For example, setting inputs and
-   event payload data used by your action. For more information, see the example
-   file, [`.env.example`](./.env.example), and the
-   [GitHub Actions Documentation](https://docs.github.com/en/actions/learn-github-actions/variables#default-environment-variables).
-
 
 ### Publishing a New Release
 
