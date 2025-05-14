@@ -28,7 +28,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "local-action": "local-action . src/main.ts .env",
-    "package": "unbuild"
+    "package": "obuild ./src/index.ts"
   },
   "devDependencies": {
     "@actions/core": "^1.11.1",
@@ -39,8 +39,7 @@
     "ofetch": "^1.4.1",
     "picocolors": "^1.1.1",
     "pretty-bytes": "^6.1.1",
-    "ufo": "^1.6.1",
-    "unbuild": "3.5.0"
+    "ufo": "^1.6.1"
   },
   "engines": {
     "node": ">=20"
@@ -51,5 +50,8 @@
       "esbuild",
       "unrs-resolver"
     ]
+  },
+  "dependencies": {
+    "obuild": "^0.0.7"
   }
 }
