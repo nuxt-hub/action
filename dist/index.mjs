@@ -564,8 +564,8 @@ var require_picocolors_browser = __commonJS({ "node_modules/.pnpm/picocolors@1.1
 } });
 
 //#endregion
-//#region node_modules/.pnpm/pretty-bytes@6.1.1/node_modules/pretty-bytes/index.js
-const BYTE_UNITS = [
+//#region node_modules/.pnpm/pretty-bytes@7.0.0/node_modules/pretty-bytes/index.js
+const BYTE_UNITS$1 = [
 	"B",
 	"kB",
 	"MB",
@@ -576,7 +576,7 @@ const BYTE_UNITS = [
 	"ZB",
 	"YB"
 ];
-const BIBYTE_UNITS = [
+const BIBYTE_UNITS$1 = [
 	"B",
 	"KiB",
 	"MiB",
@@ -587,7 +587,7 @@ const BIBYTE_UNITS = [
 	"ZiB",
 	"YiB"
 ];
-const BIT_UNITS = [
+const BIT_UNITS$1 = [
 	"b",
 	"kbit",
 	"Mbit",
@@ -598,7 +598,7 @@ const BIT_UNITS = [
 	"Zbit",
 	"Ybit"
 ];
-const BIBIT_UNITS = [
+const BIBIT_UNITS$1 = [
 	"b",
 	"kibit",
 	"Mibit",
@@ -609,23 +609,38 @@ const BIBIT_UNITS = [
 	"Zibit",
 	"Yibit"
 ];
-const toLocaleString = (number, locale, options) => {
+const toLocaleString$1 = (number, locale, options) => {
 	let result = number;
 	if (typeof locale === "string" || Array.isArray(locale)) result = number.toLocaleString(locale, options);
 	else if (locale === true || options !== void 0) result = number.toLocaleString(void 0, options);
 	return result;
 };
-function prettyBytes(number, options) {
-	if (!Number.isFinite(number)) throw new TypeError(`Expected a finite number, got ${typeof number}: ${number}`);
+const log10 = (numberOrBigInt) => {
+	if (typeof numberOrBigInt === "number") return Math.log10(numberOrBigInt);
+	const string = numberOrBigInt.toString(10);
+	return string.length + Math.log10("0." + string.slice(0, 15));
+};
+const log = (numberOrBigInt) => {
+	if (typeof numberOrBigInt === "number") return Math.log(numberOrBigInt);
+	return log10(numberOrBigInt) * Math.log(10);
+};
+const divide = (numberOrBigInt, divisor) => {
+	if (typeof numberOrBigInt === "number") return numberOrBigInt / divisor;
+	const integerPart = numberOrBigInt / BigInt(divisor);
+	const remainder = numberOrBigInt % BigInt(divisor);
+	return Number(integerPart) + Number(remainder) / divisor;
+};
+function prettyBytes$1(number, options) {
+	if (typeof number !== "bigint" && !Number.isFinite(number)) throw new TypeError(`Expected a finite number, got ${typeof number}: ${number}`);
 	options = {
 		bits: false,
 		binary: false,
 		space: true,
 		...options
 	};
-	const UNITS = options.bits ? options.binary ? BIBIT_UNITS : BIT_UNITS : options.binary ? BIBYTE_UNITS : BYTE_UNITS;
+	const UNITS = options.bits ? options.binary ? BIBIT_UNITS$1 : BIT_UNITS$1 : options.binary ? BIBYTE_UNITS$1 : BYTE_UNITS$1;
 	const separator = options.space ? " " : "";
-	if (options.signed && number === 0) return ` 0${separator}${UNITS[0]}`;
+	if (options.signed && (typeof number === "number" ? number === 0 : number === 0n)) return ` 0${separator}${UNITS[0]}`;
 	const isNegative = number < 0;
 	const prefix = isNegative ? "-" : options.signed ? "+" : "";
 	if (isNegative) number = -number;
@@ -636,13 +651,13 @@ function prettyBytes(number, options) {
 		...localeOptions
 	};
 	if (number < 1) {
-		const numberString$1 = toLocaleString(number, options.locale, localeOptions);
+		const numberString$1 = toLocaleString$1(number, options.locale, localeOptions);
 		return prefix + numberString$1 + separator + UNITS[0];
 	}
-	const exponent = Math.min(Math.floor(options.binary ? Math.log(number) / Math.log(1024) : Math.log10(number) / 3), UNITS.length - 1);
-	number /= (options.binary ? 1024 : 1e3) ** exponent;
+	const exponent = Math.min(Math.floor(options.binary ? log(number) / Math.log(1024) : log10(number) / 3), UNITS.length - 1);
+	number = divide(number, (options.binary ? 1024 : 1e3) ** exponent);
 	if (!localeOptions) number = number.toPrecision(3);
-	const numberString = toLocaleString(Number(number), options.locale, localeOptions);
+	const numberString = toLocaleString$1(Number(number), options.locale, localeOptions);
 	const unit = UNITS[exponent];
 	return prefix + numberString + separator + unit;
 }
@@ -17711,7 +17726,7 @@ const extname = function(p$1) {
 };
 
 //#endregion
-//#region node_modules/.pnpm/unstorage@1.15.0/node_modules/unstorage/dist/shared/unstorage.mNKHTF5Y.mjs
+//#region node_modules/.pnpm/unstorage@1.16.0/node_modules/unstorage/dist/shared/unstorage.CoCt7NXC.mjs
 function wrapToPromise(value$1) {
 	if (!value$1 || typeof value$1.then !== "function") return Promise.resolve(value$1);
 	return value$1;
@@ -17782,7 +17797,7 @@ function filterKeyByBase(key, base) {
 }
 
 //#endregion
-//#region node_modules/.pnpm/unstorage@1.15.0/node_modules/unstorage/dist/index.mjs
+//#region node_modules/.pnpm/unstorage@1.16.0/node_modules/unstorage/dist/index.mjs
 function defineDriver$1(factory) {
 	return factory;
 }
@@ -21431,7 +21446,7 @@ var require_anymatch = __commonJS({ "node_modules/.pnpm/anymatch@3.1.3/node_modu
 } });
 
 //#endregion
-//#region node_modules/.pnpm/unstorage@1.15.0/node_modules/unstorage/drivers/utils/index.mjs
+//#region node_modules/.pnpm/unstorage@1.16.0/node_modules/unstorage/drivers/utils/index.mjs
 function defineDriver(factory) {
 	return factory;
 }
@@ -21446,7 +21461,7 @@ function createRequiredError(driver, name) {
 }
 
 //#endregion
-//#region node_modules/.pnpm/unstorage@1.15.0/node_modules/unstorage/drivers/utils/node-fs.mjs
+//#region node_modules/.pnpm/unstorage@1.16.0/node_modules/unstorage/drivers/utils/node-fs.mjs
 function ignoreNotfound(err) {
 	return err.code === "ENOENT" || err.code === "EISDIR" ? null : err;
 }
@@ -21496,7 +21511,7 @@ async function rmRecursive(dir) {
 }
 
 //#endregion
-//#region node_modules/.pnpm/unstorage@1.15.0/node_modules/unstorage/drivers/fs.mjs
+//#region node_modules/.pnpm/unstorage@1.16.0/node_modules/unstorage/drivers/fs.mjs
 var import_anymatch = __toESM(require_anymatch(), 1);
 const PATH_TRAVERSE_RE = /\.\.:|\.\.$/;
 const DRIVER_NAME = "fs";
@@ -72651,8 +72666,8 @@ var import_dns2 = __toESM(require_dns2(), 1);
 const TIMEOUT = 1e3 * 60 * 5;
 
 //#endregion
-//#region node_modules/.pnpm/ws@8.18.1/node_modules/ws/browser.js
-var require_browser = __commonJS({ "node_modules/.pnpm/ws@8.18.1/node_modules/ws/browser.js"(exports, module) {
+//#region node_modules/.pnpm/ws@8.18.2/node_modules/ws/browser.js
+var require_browser = __commonJS({ "node_modules/.pnpm/ws@8.18.2/node_modules/ws/browser.js"(exports, module) {
 	module.exports = function() {
 		throw new Error("ws does not work in the browser. Browser clients must use the native WebSocket object");
 	};
@@ -72670,6 +72685,90 @@ const CreateDatabaseMigrationsTableQuery = `CREATE TABLE IF NOT EXISTS _hub_migr
     applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );`;
 const ListDatabaseMigrationsQuery = "select \"id\", \"name\", \"applied_at\" from \"_hub_migrations\" order by \"_hub_migrations\".\"id\"";
+
+//#endregion
+//#region node_modules/.pnpm/pretty-bytes@6.1.1/node_modules/pretty-bytes/index.js
+const BYTE_UNITS = [
+	"B",
+	"kB",
+	"MB",
+	"GB",
+	"TB",
+	"PB",
+	"EB",
+	"ZB",
+	"YB"
+];
+const BIBYTE_UNITS = [
+	"B",
+	"KiB",
+	"MiB",
+	"GiB",
+	"TiB",
+	"PiB",
+	"EiB",
+	"ZiB",
+	"YiB"
+];
+const BIT_UNITS = [
+	"b",
+	"kbit",
+	"Mbit",
+	"Gbit",
+	"Tbit",
+	"Pbit",
+	"Ebit",
+	"Zbit",
+	"Ybit"
+];
+const BIBIT_UNITS = [
+	"b",
+	"kibit",
+	"Mibit",
+	"Gibit",
+	"Tibit",
+	"Pibit",
+	"Eibit",
+	"Zibit",
+	"Yibit"
+];
+const toLocaleString = (number, locale, options) => {
+	let result = number;
+	if (typeof locale === "string" || Array.isArray(locale)) result = number.toLocaleString(locale, options);
+	else if (locale === true || options !== void 0) result = number.toLocaleString(void 0, options);
+	return result;
+};
+function prettyBytes(number, options) {
+	if (!Number.isFinite(number)) throw new TypeError(`Expected a finite number, got ${typeof number}: ${number}`);
+	options = {
+		bits: false,
+		binary: false,
+		space: true,
+		...options
+	};
+	const UNITS = options.bits ? options.binary ? BIBIT_UNITS : BIT_UNITS : options.binary ? BIBYTE_UNITS : BYTE_UNITS;
+	const separator = options.space ? " " : "";
+	if (options.signed && number === 0) return ` 0${separator}${UNITS[0]}`;
+	const isNegative = number < 0;
+	const prefix = isNegative ? "-" : options.signed ? "+" : "";
+	if (isNegative) number = -number;
+	let localeOptions;
+	if (options.minimumFractionDigits !== void 0) localeOptions = { minimumFractionDigits: options.minimumFractionDigits };
+	if (options.maximumFractionDigits !== void 0) localeOptions = {
+		maximumFractionDigits: options.maximumFractionDigits,
+		...localeOptions
+	};
+	if (number < 1) {
+		const numberString$1 = toLocaleString(number, options.locale, localeOptions);
+		return prefix + numberString$1 + separator + UNITS[0];
+	}
+	const exponent = Math.min(Math.floor(options.binary ? Math.log(number) / Math.log(1024) : Math.log10(number) / 3), UNITS.length - 1);
+	number /= (options.binary ? 1024 : 1e3) ** exponent;
+	if (!localeOptions) number = number.toPrecision(3);
+	const numberString = toLocaleString(Number(number), options.locale, localeOptions);
+	const unit = UNITS[exponent];
+	return prefix + numberString + separator + unit;
+}
 
 //#endregion
 //#region node_modules/.pnpm/duplexer@0.1.2/node_modules/duplexer/index.js
@@ -73092,21 +73191,21 @@ async function run() {
 		let completionToken;
 		if (publicFilesToUpload.length) {
 			const totalSizeToUpload = publicFilesToUpload.reduce((acc, file) => acc + file.size, 0);
-			import_core.info(`Uploading ${import_picocolors_browser.default.blueBright(formatNumber(publicFilesToUpload.length))} new static assets (${import_picocolors_browser.default.blueBright(prettyBytes(totalSizeToUpload))})...`);
+			import_core.info(`Uploading ${import_picocolors_browser.default.blueBright(formatNumber(publicFilesToUpload.length))} new static assets (${import_picocolors_browser.default.blueBright(prettyBytes$1(totalSizeToUpload))})...`);
 			if (projectInfo.type === "pages") await uploadAssetsToCloudflare(publicFilesToUpload, cloudflareUploadJwt, ({ progressSize, totalSize }) => {
 				const percentage = Math.round(progressSize / totalSize * 100);
-				import_core.info(`${percentage}% uploaded (${prettyBytes(progressSize)}/${prettyBytes(totalSize)})`);
+				import_core.info(`${percentage}% uploaded (${prettyBytes$1(progressSize)}/${prettyBytes$1(totalSize)})`);
 			});
 			else completionToken = await uploadWorkersAssetsToCloudflare(accountId, publicFilesToUpload, cloudflareUploadJwt, ({ progressSize, totalSize }) => {
 				const percentage = Math.round(progressSize / totalSize * 100);
-				import_core.info(`${percentage}% uploaded (${prettyBytes(progressSize)}/${prettyBytes(totalSize)})`);
+				import_core.info(`${percentage}% uploaded (${prettyBytes$1(progressSize)}/${prettyBytes$1(totalSize)})`);
 			});
-			import_core.info(`${import_picocolors_browser.default.blueBright(formatNumber(publicFilesToUpload.length))} new static assets uploaded (${import_picocolors_browser.default.blueBright(prettyBytes(totalSizeToUpload))})`);
+			import_core.info(`${import_picocolors_browser.default.blueBright(formatNumber(publicFilesToUpload.length))} new static assets uploaded (${import_picocolors_browser.default.blueBright(prettyBytes$1(totalSizeToUpload))})`);
 		}
 		if (publicFiles.length) {
 			const totalSize = publicFiles.reduce((acc, file) => acc + file.size, 0);
 			const totalGzipSize = publicFiles.reduce((acc, file) => acc + file.gzipSize, 0);
-			import_core.info(`${import_picocolors_browser.default.blueBright(formatNumber(publicFiles.length))} static assets (${import_picocolors_browser.default.blueBright(prettyBytes(totalSize))} / ${import_picocolors_browser.default.blueBright(prettyBytes(totalGzipSize))} gzip)`);
+			import_core.info(`${import_picocolors_browser.default.blueBright(formatNumber(publicFiles.length))} static assets (${import_picocolors_browser.default.blueBright(prettyBytes$1(totalSize))} / ${import_picocolors_browser.default.blueBright(prettyBytes$1(totalGzipSize))} gzip)`);
 		}
 		const metaFiles = await Promise.all(pathsToDeploy.filter(isWorkerPreset ? isWorkerMetaPath : isMetaPath).map((p$1) => getFile(storage, p$1, "base64")));
 		let serverFiles = await Promise.all(pathsToDeploy.filter(isWorkerPreset ? isWorkerServerPath : isServerPath).map((p$1) => getFile(storage, p$1, "base64")));
@@ -73116,7 +73215,7 @@ async function run() {
 		}));
 		const serverFilesSize = serverFiles.reduce((acc, file) => acc + file.size, 0);
 		const serverFilesGzipSize = serverFiles.reduce((acc, file) => acc + file.gzipSize, 0);
-		import_core.info(`${import_picocolors_browser.default.blueBright(formatNumber(serverFiles.length))} server files (${import_picocolors_browser.default.blueBright(prettyBytes(serverFilesSize))} / ${import_picocolors_browser.default.blueBright(prettyBytes(serverFilesGzipSize))} gzip)`);
+		import_core.info(`${import_picocolors_browser.default.blueBright(formatNumber(serverFiles.length))} server files (${import_picocolors_browser.default.blueBright(prettyBytes$1(serverFilesSize))} / ${import_picocolors_browser.default.blueBright(prettyBytes$1(serverFilesGzipSize))} gzip)`);
 		if (!config$2.database) import_core.info("Skipping database migrations and queries - database not enabled in config");
 		if (config$2.database) {
 			import_core.info("Processing database migrations...");
