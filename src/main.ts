@@ -43,7 +43,8 @@ export async function run() {
       projectSlug: string
       projectKey: string
       type: 'pages' | 'worker'
-      environment: 'production' | 'preview'
+      environment: string
+      environmentUrl: string
     }>(`/ci-cd/token`, {
       headers: {
         Authorization: `Bearer ${idToken}`,
@@ -57,10 +58,6 @@ export async function run() {
     const projectKey = projectInfo.projectKey
     core.setSecret(projectInfo.accessToken)
     core.debug(`Retrieved project info ${JSON.stringify(projectInfo)}`)
-
-    if (projectInfo.type === 'worker' && projectInfo.environment === 'preview') {
-      throw new Error('Currently NuxtHub on Workers (BETA) does not support preview environments.')
-    }
 
     core.info(`Deploying ${colors.blueBright(projectInfo.projectSlug)} to ${colors.blueBright(projectInfo.environment)} environment...`)
     // #endregion
@@ -311,7 +308,8 @@ export async function run() {
     core.debug(`Deployment details ${JSON.stringify(deployment)}`)
 
     // Set outputs
-    core.setOutput('deployment-url', deployment.primaryUrl)
+    core.setOutput('deployment-url', deployment.primaryUrl || deployment.url)
+    core.setOutput('environment-url', projectInfo.environmentUrl)
     core.setOutput('branch-url', deployment.branchUrl)
     core.setOutput('environment', projectInfo.environment)
     core.info(`Deployed to ${projectInfo.environment}: ${deployment.url ?? deployment.primaryUrl}`)
