@@ -44,6 +44,7 @@ export async function run() {
       projectKey: string
       type: 'pages' | 'worker'
       environment: string
+      environmentUrl: string
     }>(`/ci-cd/token`, {
       headers: {
         Authorization: `Bearer ${idToken}`,
@@ -307,7 +308,8 @@ export async function run() {
     core.debug(`Deployment details ${JSON.stringify(deployment)}`)
 
     // Set outputs
-    core.setOutput('deployment-url', deployment.primaryUrl)
+    core.setOutput('deployment-url', deployment.primaryUrl || deployment.url)
+    core.setOutput('environment-url', projectInfo.environmentUrl)
     core.setOutput('branch-url', deployment.branchUrl)
     core.setOutput('environment', projectInfo.environment)
     core.info(`Deployed to ${projectInfo.environment}: ${deployment.url ?? deployment.primaryUrl}`)

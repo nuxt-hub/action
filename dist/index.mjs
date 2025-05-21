@@ -43928,9 +43928,6 @@ async function run() {
     const projectKey = projectInfo.projectKey;
     coreExports.setSecret(projectInfo.accessToken);
     coreExports.debug(`Retrieved project info ${JSON.stringify(projectInfo)}`);
-    if (projectInfo.type === "worker" && projectInfo.environment === "preview") {
-      throw new Error("Currently NuxtHub on Workers (BETA) does not support preview environments.");
-    }
     coreExports.info(`Deploying ${colors$1.blueBright(projectInfo.projectSlug)} to ${colors$1.blueBright(projectInfo.environment)} environment...`);
     coreExports.debug(`Processing files in ${directory}...`);
     const storage = await getStorage(directory);
@@ -44120,7 +44117,8 @@ async function run() {
       }
     });
     coreExports.debug(`Deployment details ${JSON.stringify(deployment)}`);
-    coreExports.setOutput("deployment-url", deployment.primaryUrl);
+    coreExports.setOutput("deployment-url", deployment.primaryUrl || deployment.url);
+    coreExports.setOutput("environment-url", projectInfo.environmentUrl);
     coreExports.setOutput("branch-url", deployment.branchUrl);
     coreExports.setOutput("environment", projectInfo.environment);
     coreExports.info(`Deployed to ${projectInfo.environment}: ${deployment.url ?? deployment.primaryUrl}`);
