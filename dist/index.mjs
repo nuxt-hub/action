@@ -810,7 +810,7 @@ function requirePicocolors () {
 var picocolorsExports = /*@__PURE__*/ requirePicocolors();
 const colors$1 = /*@__PURE__*/getDefaultExportFromCjs(picocolorsExports);
 
-const BYTE_UNITS = [
+const BYTE_UNITS$1 = [
 	'B',
 	'kB',
 	'MB',
@@ -822,7 +822,7 @@ const BYTE_UNITS = [
 	'YB',
 ];
 
-const BIBYTE_UNITS = [
+const BIBYTE_UNITS$1 = [
 	'B',
 	'KiB',
 	'MiB',
@@ -834,7 +834,7 @@ const BIBYTE_UNITS = [
 	'YiB',
 ];
 
-const BIT_UNITS = [
+const BIT_UNITS$1 = [
 	'b',
 	'kbit',
 	'Mbit',
@@ -846,7 +846,7 @@ const BIT_UNITS = [
 	'Ybit',
 ];
 
-const BIBIT_UNITS = [
+const BIBIT_UNITS$1 = [
 	'b',
 	'kibit',
 	'Mibit',
@@ -864,7 +864,7 @@ Formats the given number using `Number#toLocaleString`.
 - If locale is true, the system default locale is used for translation.
 - If no value for locale is specified, the number is returned unmodified.
 */
-const toLocaleString = (number, locale, options) => {
+const toLocaleString$1 = (number, locale, options) => {
 	let result = number;
 	if (typeof locale === 'string' || Array.isArray(locale)) {
 		result = number.toLocaleString(locale, options);
@@ -875,8 +875,36 @@ const toLocaleString = (number, locale, options) => {
 	return result;
 };
 
-function prettyBytes(number, options) {
-	if (!Number.isFinite(number)) {
+const log10 = numberOrBigInt => {
+	if (typeof numberOrBigInt === 'number') {
+		return Math.log10(numberOrBigInt);
+	}
+
+	const string = numberOrBigInt.toString(10);
+
+	return string.length + Math.log10('0.' + string.slice(0, 15));
+};
+
+const log = numberOrBigInt => {
+	if (typeof numberOrBigInt === 'number') {
+		return Math.log(numberOrBigInt);
+	}
+
+	return log10(numberOrBigInt) * Math.log(10);
+};
+
+const divide = (numberOrBigInt, divisor) => {
+	if (typeof numberOrBigInt === 'number') {
+		return numberOrBigInt / divisor;
+	}
+
+	const integerPart = numberOrBigInt / BigInt(divisor);
+	const remainder = numberOrBigInt % BigInt(divisor);
+	return Number(integerPart) + (Number(remainder) / divisor);
+};
+
+function prettyBytes$1(number, options) {
+	if (typeof number !== 'bigint' && !Number.isFinite(number)) {
 		throw new TypeError(`Expected a finite number, got ${typeof number}: ${number}`);
 	}
 
@@ -888,12 +916,12 @@ function prettyBytes(number, options) {
 	};
 
 	const UNITS = options.bits
-		? (options.binary ? BIBIT_UNITS : BIT_UNITS)
-		: (options.binary ? BIBYTE_UNITS : BYTE_UNITS);
+		? (options.binary ? BIBIT_UNITS$1 : BIT_UNITS$1)
+		: (options.binary ? BIBYTE_UNITS$1 : BYTE_UNITS$1);
 
 	const separator = options.space ? ' ' : '';
 
-	if (options.signed && number === 0) {
+	if (options.signed && (typeof number === 'number' ? number === 0 : number === 0n)) {
 		return ` 0${separator}${UNITS[0]}`;
 	}
 
@@ -915,18 +943,18 @@ function prettyBytes(number, options) {
 	}
 
 	if (number < 1) {
-		const numberString = toLocaleString(number, options.locale, localeOptions);
+		const numberString = toLocaleString$1(number, options.locale, localeOptions);
 		return prefix + numberString + separator + UNITS[0];
 	}
 
-	const exponent = Math.min(Math.floor(options.binary ? Math.log(number) / Math.log(1024) : Math.log10(number) / 3), UNITS.length - 1);
-	number /= (options.binary ? 1024 : 1000) ** exponent;
+	const exponent = Math.min(Math.floor(options.binary ? log(number) / Math.log(1024) : log10(number) / 3), UNITS.length - 1);
+	number = divide(number, (options.binary ? 1024 : 1000) ** exponent);
 
 	if (!localeOptions) {
 		number = number.toPrecision(3);
 	}
 
-	const numberString = toLocaleString(Number(number), options.locale, localeOptions);
+	const numberString = toLocaleString$1(Number(number), options.locale, localeOptions);
 
 	const unit = UNITS[exponent];
 
@@ -43590,6 +43618,129 @@ const CreateDatabaseMigrationsTableQuery = `CREATE TABLE IF NOT EXISTS _hub_migr
 );`;
 const ListDatabaseMigrationsQuery = 'select "id", "name", "applied_at" from "_hub_migrations" order by "_hub_migrations"."id"';
 
+const BYTE_UNITS = [
+	'B',
+	'kB',
+	'MB',
+	'GB',
+	'TB',
+	'PB',
+	'EB',
+	'ZB',
+	'YB',
+];
+
+const BIBYTE_UNITS = [
+	'B',
+	'KiB',
+	'MiB',
+	'GiB',
+	'TiB',
+	'PiB',
+	'EiB',
+	'ZiB',
+	'YiB',
+];
+
+const BIT_UNITS = [
+	'b',
+	'kbit',
+	'Mbit',
+	'Gbit',
+	'Tbit',
+	'Pbit',
+	'Ebit',
+	'Zbit',
+	'Ybit',
+];
+
+const BIBIT_UNITS = [
+	'b',
+	'kibit',
+	'Mibit',
+	'Gibit',
+	'Tibit',
+	'Pibit',
+	'Eibit',
+	'Zibit',
+	'Yibit',
+];
+
+/*
+Formats the given number using `Number#toLocaleString`.
+- If locale is a string, the value is expected to be a locale-key (for example: `de`).
+- If locale is true, the system default locale is used for translation.
+- If no value for locale is specified, the number is returned unmodified.
+*/
+const toLocaleString = (number, locale, options) => {
+	let result = number;
+	if (typeof locale === 'string' || Array.isArray(locale)) {
+		result = number.toLocaleString(locale, options);
+	} else if (locale === true || options !== undefined) {
+		result = number.toLocaleString(undefined, options);
+	}
+
+	return result;
+};
+
+function prettyBytes(number, options) {
+	if (!Number.isFinite(number)) {
+		throw new TypeError(`Expected a finite number, got ${typeof number}: ${number}`);
+	}
+
+	options = {
+		bits: false,
+		binary: false,
+		space: true,
+		...options,
+	};
+
+	const UNITS = options.bits
+		? (options.binary ? BIBIT_UNITS : BIT_UNITS)
+		: (options.binary ? BIBYTE_UNITS : BYTE_UNITS);
+
+	const separator = options.space ? ' ' : '';
+
+	if (options.signed && number === 0) {
+		return ` 0${separator}${UNITS[0]}`;
+	}
+
+	const isNegative = number < 0;
+	const prefix = isNegative ? '-' : (options.signed ? '+' : '');
+
+	if (isNegative) {
+		number = -number;
+	}
+
+	let localeOptions;
+
+	if (options.minimumFractionDigits !== undefined) {
+		localeOptions = {minimumFractionDigits: options.minimumFractionDigits};
+	}
+
+	if (options.maximumFractionDigits !== undefined) {
+		localeOptions = {maximumFractionDigits: options.maximumFractionDigits, ...localeOptions};
+	}
+
+	if (number < 1) {
+		const numberString = toLocaleString(number, options.locale, localeOptions);
+		return prefix + numberString + separator + UNITS[0];
+	}
+
+	const exponent = Math.min(Math.floor(options.binary ? Math.log(number) / Math.log(1024) : Math.log10(number) / 3), UNITS.length - 1);
+	number /= (options.binary ? 1024 : 1000) ** exponent;
+
+	if (!localeOptions) {
+		number = number.toPrecision(3);
+	}
+
+	const numberString = toLocaleString(Number(number), options.locale, localeOptions);
+
+	const unit = UNITS[exponent];
+
+	return prefix + numberString + separator + unit;
+}
+
 const getOptions = options => ({level: 9, ...options});
 const gzip = promisify(Ye.gzip);
 
@@ -43984,24 +44135,24 @@ async function run() {
     let completionToken;
     if (publicFilesToUpload.length) {
       const totalSizeToUpload = publicFilesToUpload.reduce((acc, file) => acc + file.size, 0);
-      coreExports.info(`Uploading ${colors$1.blueBright(formatNumber(publicFilesToUpload.length))} new static assets (${colors$1.blueBright(prettyBytes(totalSizeToUpload))})...`);
+      coreExports.info(`Uploading ${colors$1.blueBright(formatNumber(publicFilesToUpload.length))} new static assets (${colors$1.blueBright(prettyBytes$1(totalSizeToUpload))})...`);
       if (projectInfo.type === "pages") {
         await uploadAssetsToCloudflare(publicFilesToUpload, cloudflareUploadJwt, ({ progressSize, totalSize }) => {
           const percentage = Math.round(progressSize / totalSize * 100);
-          coreExports.info(`${percentage}% uploaded (${prettyBytes(progressSize)}/${prettyBytes(totalSize)})`);
+          coreExports.info(`${percentage}% uploaded (${prettyBytes$1(progressSize)}/${prettyBytes$1(totalSize)})`);
         });
       } else {
         completionToken = await uploadWorkersAssetsToCloudflare(accountId, publicFilesToUpload, cloudflareUploadJwt, ({ progressSize, totalSize }) => {
           const percentage = Math.round(progressSize / totalSize * 100);
-          coreExports.info(`${percentage}% uploaded (${prettyBytes(progressSize)}/${prettyBytes(totalSize)})`);
+          coreExports.info(`${percentage}% uploaded (${prettyBytes$1(progressSize)}/${prettyBytes$1(totalSize)})`);
         });
       }
-      coreExports.info(`${colors$1.blueBright(formatNumber(publicFilesToUpload.length))} new static assets uploaded (${colors$1.blueBright(prettyBytes(totalSizeToUpload))})`);
+      coreExports.info(`${colors$1.blueBright(formatNumber(publicFilesToUpload.length))} new static assets uploaded (${colors$1.blueBright(prettyBytes$1(totalSizeToUpload))})`);
     }
     if (publicFiles.length) {
       const totalSize = publicFiles.reduce((acc, file) => acc + file.size, 0);
       const totalGzipSize = publicFiles.reduce((acc, file) => acc + file.gzipSize, 0);
-      coreExports.info(`${colors$1.blueBright(formatNumber(publicFiles.length))} static assets (${colors$1.blueBright(prettyBytes(totalSize))} / ${colors$1.blueBright(prettyBytes(totalGzipSize))} gzip)`);
+      coreExports.info(`${colors$1.blueBright(formatNumber(publicFiles.length))} static assets (${colors$1.blueBright(prettyBytes$1(totalSize))} / ${colors$1.blueBright(prettyBytes$1(totalGzipSize))} gzip)`);
     }
     const metaFiles = await Promise.all(pathsToDeploy.filter(isWorkerPreset ? isWorkerMetaPath : isMetaPath).map((p) => getFile(storage, p, "base64")));
     let serverFiles = await Promise.all(pathsToDeploy.filter(isWorkerPreset ? isWorkerServerPath : isServerPath).map((p) => getFile(storage, p, "base64")));
@@ -44013,7 +44164,7 @@ async function run() {
     }
     const serverFilesSize = serverFiles.reduce((acc, file) => acc + file.size, 0);
     const serverFilesGzipSize = serverFiles.reduce((acc, file) => acc + file.gzipSize, 0);
-    coreExports.info(`${colors$1.blueBright(formatNumber(serverFiles.length))} server files (${colors$1.blueBright(prettyBytes(serverFilesSize))} / ${colors$1.blueBright(prettyBytes(serverFilesGzipSize))} gzip)`);
+    coreExports.info(`${colors$1.blueBright(formatNumber(serverFiles.length))} server files (${colors$1.blueBright(prettyBytes$1(serverFilesSize))} / ${colors$1.blueBright(prettyBytes$1(serverFilesGzipSize))} gzip)`);
     if (!config.database) {
       coreExports.info("Skipping database migrations and queries - database not enabled in config");
     }
