@@ -18,6 +18,14 @@ inputs:
     description: 'The URL of the NuxtHub dashboard'
     required: false
     default: 'https://admin.hub.nuxt.com'
+  build:
+    description: 'Whether to build the project before deploying'
+    required: false
+    default: "false"
+  build-command:
+    description: 'The command to build the project'
+    required: false
+    default: "npm run build"
 
 outputs:
   environment:

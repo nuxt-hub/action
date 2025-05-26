@@ -6,6 +6,7 @@ import * as core from '@actions/core'
 import { getStorage, getPathsToDeploy, getFile, uploadAssetsToCloudflare, uploadWorkersAssetsToCloudflare, isMetaPath, isWorkerMetaPath, isServerPath, isWorkerServerPath, getPublicFiles, getWorkerPublicFiles } from 'nuxthub/internal'
 import { createMigrationsTable, fetchRemoteMigrations, queryDatabase } from './database.js'
 import { join } from 'node:path'
+import { execa } from 'execa'
 
 export async function run() {
   try {
@@ -58,6 +59,29 @@ export async function run() {
     const projectKey = projectInfo.projectKey
     core.setSecret(projectInfo.accessToken)
     core.debug(`Retrieved project info ${JSON.stringify(projectInfo)}`)
+
+    const shouldBuild = core.getInput('build') === 'true'
+    const buildCommand = core.getInput('build-command') || 'npm run build'
+
+    if (shouldBuild) {
+      core.info(`Building ${colors.blueBright(projectInfo.projectSlug)} for ${colors.blueBright(projectInfo.environment)} environment...`)
+
+      const envVars = await $api<{ key: string; value: string; encrypted: boolean }[]>(
+        `/teams/${projectInfo.teamSlug}/projects/${projectInfo.projectSlug}/${projectInfo.environment}/variables`
+      )
+
+      const buildEnv: Record<string, string> = {}
+      for (const { key, value, encrypted } of envVars) {
+        buildEnv[key] = value
+        if (encrypted) core.setSecret(value)
+      }
+
+      await execa({
+        cwd: directory,
+        stdio: 'inherit',
+        env: buildEnv,
+      })`${buildCommand}`
+    }
 
     core.info(`Deploying ${colors.blueBright(projectInfo.projectSlug)} to ${colors.blueBright(projectInfo.environment)} environment...`)
     // #endregion

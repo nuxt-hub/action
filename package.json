@@ -35,6 +35,7 @@
     "@nuxt/eslint-config": "^1.4.1",
     "@types/node": "^22.15.21",
     "eslint": "^9.27.0",
+    "execa": "^9.5.3",
     "nuxthub": "https://pkg.pr.new/nuxt-hub/cli/nuxthub@56",
     "ofetch": "^1.4.1",
     "picocolors": "^1.1.1",
