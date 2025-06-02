@@ -83,6 +83,11 @@ export async function run() {
       await execa({
         cwd: buildDirectory,
         stdio: 'inherit',
+      })`pwd && ls`
+
+      await execa({
+        cwd: buildDirectory,
+        stdio: 'inherit',
         env: buildEnv,
       })`${buildCommand}`
     }
