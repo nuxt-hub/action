@@ -80,10 +80,27 @@ export async function run() {
 
       const buildDirectory = join(directory, '..')
 
+      console.log(`directory: ${directory}`)
+      console.log(`buildDirectory: ${buildDirectory}`)
+
       await execa({
         cwd: buildDirectory,
         stdio: 'inherit',
-      })`pwd && ls`
+      })`pwd`
+
+      core.info(`A.`)
+
+      const { stdout: buildOutput } = await execa`npm run build`
+      core.info(`buildOutput: ${buildOutput}`)
+
+      core.info(`B.`)
+
+      await execa({
+        cwd: buildDirectory,
+        stdio: 'inherit',
+      })`npm run build`
+
+      core.info(`C.`)
 
       await execa({
         cwd: buildDirectory,
