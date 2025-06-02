@@ -78,7 +78,6 @@ export async function run() {
         buildEnv[key] = value
       }
 
-      // directory is the output directory of the build, we should build one directory up
       const buildDirectory = join(directory, '..')
 
       await execa({

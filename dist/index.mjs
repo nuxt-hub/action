@@ -53178,8 +53178,9 @@ async function run() {
         if (encrypted && !isNuxtPublicEnv) coreExports.setSecret(value);
         buildEnv[key] = value;
       }
+      const buildDirectory = join(directory, "..");
       await execa({
-        cwd: directory,
+        cwd: buildDirectory,
         stdio: "inherit",
         env: buildEnv
       })`${buildCommand}`;
