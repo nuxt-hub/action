@@ -53173,8 +53173,10 @@ async function run() {
       );
       const buildEnv = {};
       for (const { key, value, encrypted } of envVars) {
+        if (!value) continue;
+        const isNuxtPublicEnv = key.startsWith("NUXT_PUBLIC_");
+        if (encrypted && !isNuxtPublicEnv) coreExports.setSecret(value);
         buildEnv[key] = value;
-        if (encrypted) coreExports.setSecret(value);
       }
       await execa({
         cwd: directory,

@@ -72,9 +72,10 @@ export async function run() {
 
       const buildEnv: Record<string, string> = {}
       for (const { key, value, encrypted } of envVars) {
-        buildEnv[key] = value
+        if (!value) continue
         const isNuxtPublicEnv = key.startsWith('NUXT_PUBLIC_')
         if (encrypted && !isNuxtPublicEnv) core.setSecret(value)
+        buildEnv[key] = value
       }
 
       await execa({
