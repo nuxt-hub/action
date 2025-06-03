@@ -82,23 +82,12 @@ export async function run() {
 
       console.log(`directory: ${directory}`)
       console.log(`buildDirectory: ${buildDirectory}`)
+      console.log(`buildCommand: ${buildCommand}`)
 
-      await execa({
-        cwd: buildDirectory,
-        stdio: 'inherit',
-      })`pwd`
+      // core.info(`A.`)
 
-      core.info(`A.`)
-
-      const { stdout: buildOutput } = await execa`npm run build`
-      core.info(`buildOutput: ${buildOutput}`)
-
-      core.info(`B.`)
-
-      await execa({
-        cwd: buildDirectory,
-        stdio: 'inherit',
-      })`npm run build`
+      // const { stdout: buildOutput } = await execa`npm run build`
+      // core.info(`buildOutput: ${buildOutput}`)
 
       core.info(`C.`)
 
@@ -106,7 +95,7 @@ export async function run() {
         cwd: buildDirectory,
         stdio: 'inherit',
         env: buildEnv,
-      })`${buildCommand}`
+      })`npm run build`
     }
 
     core.info(`Deploying ${colors.blueBright(projectInfo.projectSlug)} to ${colors.blueBright(projectInfo.environment)} environment...`)

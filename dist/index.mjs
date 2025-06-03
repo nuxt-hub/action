@@ -53181,24 +53181,13 @@ async function run() {
       const buildDirectory = join(directory, "..");
       console.log(`directory: ${directory}`);
       console.log(`buildDirectory: ${buildDirectory}`);
-      await execa({
-        cwd: buildDirectory,
-        stdio: "inherit"
-      })`pwd`;
-      coreExports.info(`A.`);
-      const { stdout: buildOutput } = await execa`npm run build`;
-      coreExports.info(`buildOutput: ${buildOutput}`);
-      coreExports.info(`B.`);
-      await execa({
-        cwd: buildDirectory,
-        stdio: "inherit"
-      })`npm run build`;
+      console.log(`buildCommand: ${buildCommand}`);
       coreExports.info(`C.`);
       await execa({
         cwd: buildDirectory,
         stdio: "inherit",
         env: buildEnv
-      })`${buildCommand}`;
+      })`npm run build`;
     }
     coreExports.info(`Deploying ${colors$1.blueBright(projectInfo.projectSlug)} to ${colors$1.blueBright(projectInfo.environment)} environment...`);
     coreExports.debug(`Processing files in ${directory}...`);
