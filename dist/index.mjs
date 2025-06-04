@@ -53165,7 +53165,6 @@ async function run() {
     coreExports.setSecret(projectInfo.accessToken);
     coreExports.debug(`Retrieved project info ${JSON.stringify(projectInfo)}`);
     const shouldBuild = coreExports.getInput("build") === "true";
-    const buildCommand = coreExports.getInput("build-command") || "npm run build";
     if (shouldBuild) {
       coreExports.info(`Building ${colors$1.blueBright(projectInfo.projectSlug)} for ${colors$1.blueBright(projectInfo.environment)} environment...`);
       const envVars = await $api(
@@ -53178,16 +53177,16 @@ async function run() {
         if (encrypted && !isNuxtPublicEnv) coreExports.setSecret(value);
         buildEnv[key] = value;
       }
+      const buildCommand = coreExports.getInput("build-command") || "npm run build";
       const buildDirectory = join(directory, "..");
-      console.log(`directory: ${directory}`);
-      console.log(`buildDirectory: ${buildDirectory}`);
-      console.log(`buildCommand: ${buildCommand}`);
-      coreExports.info(`C.`);
+      const buildCommandArray = parseCommandString(buildCommand);
+      coreExports.debug(`Build command: ${buildCommand}`);
+      coreExports.debug(`Build directory: ${buildDirectory}`);
       await execa({
         cwd: buildDirectory,
         stdio: "inherit",
         env: buildEnv
-      })`${buildCommand}`;
+      })`${buildCommandArray}`;
     }
     coreExports.info(`Deploying ${colors$1.blueBright(projectInfo.projectSlug)} to ${colors$1.blueBright(projectInfo.environment)} environment...`);
     coreExports.debug(`Processing files in ${directory}...`);

@@ -6,7 +6,7 @@ import * as core from '@actions/core'
 import { getStorage, getPathsToDeploy, getFile, uploadAssetsToCloudflare, uploadWorkersAssetsToCloudflare, isMetaPath, isWorkerMetaPath, isServerPath, isWorkerServerPath, getPublicFiles, getWorkerPublicFiles } from 'nuxthub/internal'
 import { createMigrationsTable, fetchRemoteMigrations, queryDatabase } from './database.js'
 import { join } from 'node:path'
-import { execa } from 'execa'
+import { execa, parseCommandString } from 'execa'
 
 export async function run() {
   try {
@@ -61,8 +61,6 @@ export async function run() {
     core.debug(`Retrieved project info ${JSON.stringify(projectInfo)}`)
 
     const shouldBuild = core.getInput('build') === 'true'
-    const buildCommand = core.getInput('build-command') || 'npm run build'
-
     if (shouldBuild) {
       core.info(`Building ${colors.blueBright(projectInfo.projectSlug)} for ${colors.blueBright(projectInfo.environment)} environment...`)
 
@@ -78,24 +76,18 @@ export async function run() {
         buildEnv[key] = value
       }
 
+      const buildCommand = core.getInput('build-command') || 'npm run build'
       const buildDirectory = join(directory, '..')
+      const buildCommandArray = parseCommandString(buildCommand);
 
-      console.log(`directory: ${directory}`)
-      console.log(`buildDirectory: ${buildDirectory}`)
-      console.log(`buildCommand: ${buildCommand}`)
-
-      // core.info(`A.`)
-
-      // const { stdout: buildOutput } = await execa`npm run build`
-      // core.info(`buildOutput: ${buildOutput}`)
-
-      core.info(`C.`)
+      core.debug(`Build command: ${buildCommand}`)
+      core.debug(`Build directory: ${buildDirectory}`)
 
       await execa({
         cwd: buildDirectory,
         stdio: 'inherit',
         env: buildEnv,
-      })`${buildCommand}`
+      })`${buildCommandArray}`
     }
 
     core.info(`Deploying ${colors.blueBright(projectInfo.projectSlug)} to ${colors.blueBright(projectInfo.environment)} environment...`)
