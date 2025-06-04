@@ -53187,7 +53187,7 @@ async function run() {
         cwd: buildDirectory,
         stdio: "inherit",
         env: buildEnv
-      })`npm run build`;
+      })`${buildCommand}`;
     }
     coreExports.info(`Deploying ${colors$1.blueBright(projectInfo.projectSlug)} to ${colors$1.blueBright(projectInfo.environment)} environment...`);
     coreExports.debug(`Processing files in ${directory}...`);

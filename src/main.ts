@@ -95,7 +95,7 @@ export async function run() {
         cwd: buildDirectory,
         stdio: 'inherit',
         env: buildEnv,
-      })`npm run build`
+      })`${buildCommand}`
     }
 
     core.info(`Deploying ${colors.blueBright(projectInfo.projectSlug)} to ${colors.blueBright(projectInfo.environment)} environment...`)
