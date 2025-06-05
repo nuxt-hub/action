@@ -8,22 +8,26 @@ branding:
 
 inputs:
   project-key:
-    description: 'The project key of the NuxtHub project to deploy to'
+    description: 'The project key of the NuxtHub project to deploy to.'
     required: false
   directory:
-    description: 'The directory of the built Nuxt application'
+    description: 'The root directory of your Nuxt application to be used as the working directory for the build step.'
+    required: false
+    default: ''
+  output-directory:
+    description: 'The output directory containing the built Nuxt application to deploy, relative to the directory specified in `directory`. Defaults to `dist`.'
     required: false
     default: 'dist'
   hub-url:
-    description: 'The URL of the NuxtHub dashboard'
+    description: 'The base URL of the NuxtHub dashboard.'
     required: false
     default: 'https://admin.hub.nuxt.com'
   build:
-    description: 'Whether to build the project before deploying'
+    description: 'Set to "true" to build the project before deploying. If "false", the action will skip the build step and deploy the contents of the output directory as-is.'
     required: false
     default: "false"
   build-command:
-    description: 'The command to build the project'
+    description: 'The command to run to build your Nuxt application. Executed in the directory specified in `directory`.'
     required: false
     default: "npm run build"
 

@@ -53134,6 +53134,8 @@ async function run() {
   try {
     const projectKeyInput = coreExports.getInput("project-key");
     const directory = coreExports.getInput("directory");
+    const outputDirectoryInput = coreExports.getInput("output-directory");
+    const outputDirectory = join(directory, outputDirectoryInput);
     const hubUrl = coreExports.getInput("hub-url");
     if (projectKeyInput !== void 0) coreExports.debug(`Linked with: \`${projectKeyInput}\``);
     coreExports.debug(`Nuxt output directory: ${directory}`);
@@ -53178,19 +53180,18 @@ async function run() {
         buildEnv[key] = value;
       }
       const buildCommand = coreExports.getInput("build-command") || "npm run build";
-      const buildDirectory = join(directory, "..");
       const buildCommandArray = parseCommandString(buildCommand);
       coreExports.debug(`Build command: ${buildCommand}`);
-      coreExports.debug(`Build directory: ${buildDirectory}`);
+      coreExports.debug(`Build directory: ${directory}`);
       await execa({
-        cwd: buildDirectory,
+        cwd: directory,
         stdio: "inherit",
         env: buildEnv
       })`${buildCommandArray}`;
     }
     coreExports.info(`Deploying ${colors$1.blueBright(projectInfo.projectSlug)} to ${colors$1.blueBright(projectInfo.environment)} environment...`);
-    coreExports.debug(`Processing files in ${directory}...`);
-    const storage = await getStorage(directory);
+    coreExports.debug(`Processing files in ${outputDirectory}...`);
+    const storage = await getStorage(outputDirectory);
     const fileKeys = await storage.getKeys();
     const pathsToDeploy = getPathsToDeploy(fileKeys);
     const config = await storage.getItem("hub.config.json");
@@ -53281,7 +53282,7 @@ async function run() {
       coreExports.info("Processing database migrations...");
       const localMigrations = fileKeys.filter((fileKey) => fileKey.startsWith("database:migrations:") && fileKey.endsWith(".sql")).map((fileKey) => fileKey.replace("database:migrations:", "").replace(".sql", ""));
       if (!localMigrations.length) {
-        coreExports.info(`Skipping database migrations - no database migrations found in ${colors$1.blueBright(`${directory}/database/migrations`)}`);
+        coreExports.info(`Skipping database migrations - no database migrations found in ${colors$1.blueBright(`${outputDirectory}/database/migrations`)}`);
         coreExports.info("No pending migrations to apply");
       }
       if (localMigrations.length) {
@@ -53330,7 +53331,7 @@ async function run() {
       }
       const localQueries = fileKeys.filter((fileKey) => fileKey.startsWith("database:queries:") && fileKey.endsWith(".sql")).map((fileKey) => fileKey.replace("database:queries:", "").replace(".sql", ""));
       if (!localQueries.length) {
-        coreExports.info(`Skipping database queries - no database queries found in ${colors$1.blueBright(`${directory}/database/queries`)}`);
+        coreExports.info(`Skipping database queries - no database queries found in ${colors$1.blueBright(`${outputDirectory}/database/queries`)}`);
       }
       if (localQueries.length) {
         coreExports.info(`Applying ${colors$1.blueBright(formatNumber(localQueries.length))} database ${localQueries.length === 1 ? "query" : "queries"}...`);

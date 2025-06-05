@@ -12,6 +12,8 @@ export async function run() {
   try {
     const projectKeyInput = core.getInput('project-key')
     const directory = core.getInput('directory')
+    const outputDirectoryInput = core.getInput('output-directory')
+    const outputDirectory = join(directory, outputDirectoryInput)
     const hubUrl = core.getInput('hub-url')
 
     if (projectKeyInput !== undefined) core.debug(`Linked with: \`${projectKeyInput}\``)
@@ -59,7 +61,9 @@ export async function run() {
     const projectKey = projectInfo.projectKey
     core.setSecret(projectInfo.accessToken)
     core.debug(`Retrieved project info ${JSON.stringify(projectInfo)}`)
+    // #endregion
 
+    // #region Build
     const shouldBuild = core.getInput('build') === 'true'
     if (shouldBuild) {
       core.info(`Building ${colors.blueBright(projectInfo.projectSlug)} for ${colors.blueBright(projectInfo.environment)} environment...`)
@@ -77,26 +81,24 @@ export async function run() {
       }
 
       const buildCommand = core.getInput('build-command') || 'npm run build'
-      const buildDirectory = join(directory, '..')
       const buildCommandArray = parseCommandString(buildCommand);
 
       core.debug(`Build command: ${buildCommand}`)
-      core.debug(`Build directory: ${buildDirectory}`)
+      core.debug(`Build directory: ${directory}`)
 
       await execa({
-        cwd: buildDirectory,
+        cwd: directory,
         stdio: 'inherit',
         env: buildEnv,
       })`${buildCommandArray}`
     }
-
-    core.info(`Deploying ${colors.blueBright(projectInfo.projectSlug)} to ${colors.blueBright(projectInfo.environment)} environment...`)
     // #endregion
 
     // #region Prepare deployment
-    core.debug(`Processing files in ${directory}...`)
+    core.info(`Deploying ${colors.blueBright(projectInfo.projectSlug)} to ${colors.blueBright(projectInfo.environment)} environment...`)
+    core.debug(`Processing files in ${outputDirectory}...`)
 
-    const storage = await getStorage(directory)
+    const storage = await getStorage(outputDirectory)
     const fileKeys = await storage.getKeys()
     const pathsToDeploy = getPathsToDeploy(fileKeys)
     const config = await storage.getItem('hub.config.json')
@@ -219,7 +221,7 @@ export async function run() {
         .filter(fileKey => fileKey.startsWith('database:migrations:') && fileKey.endsWith('.sql'))
         .map(fileKey => fileKey.replace('database:migrations:', '').replace('.sql', ''))
       if (!localMigrations.length) {
-        core.info(`Skipping database migrations - no database migrations found in ${colors.blueBright(`${directory}/database/migrations`)}`)
+        core.info(`Skipping database migrations - no database migrations found in ${colors.blueBright(`${outputDirectory}/database/migrations`)}`)
         core.info('No pending migrations to apply')
       }
 
@@ -281,7 +283,7 @@ export async function run() {
         .filter(fileKey => fileKey.startsWith('database:queries:') && fileKey.endsWith('.sql'))
         .map(fileKey => fileKey.replace('database:queries:', '').replace('.sql', ''))
       if (!localQueries.length) {
-        core.info(`Skipping database queries - no database queries found in ${colors.blueBright(`${directory}/database/queries`)}`)
+        core.info(`Skipping database queries - no database queries found in ${colors.blueBright(`${outputDirectory}/database/queries`)}`)
       }
 
       if (localQueries.length) {
