@@ -22,7 +22,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 10
 
       - name: Use Node.js
         uses: actions/setup-node@v4
@@ -34,7 +34,7 @@ jobs:
         run: pnpm install
 
       - name: Build dist/ Directory
-        run: pnpm run bundle
+        run: ./node_modules/.bin/tsdown
 
       # This will fail the workflow if the `dist/` directory is different than
       # expected.

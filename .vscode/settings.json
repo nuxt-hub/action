@@ -1,4 +1,3 @@
 {
-    "eslint.format.enable": true,
-    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+	"editor.defaultFormatter": "biomejs.biome"
 }

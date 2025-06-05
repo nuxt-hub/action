@@ -99,13 +99,13 @@ pnpm run bundle
 ### Development
 
 1. Update `src/`
-2. Format, test, and build the action
+2. Format, lint, and build the action
 
    ```bash
    pnpm run bundle
    ```
 
-   > It will run [`unbuild`](https://github.com/unjs/unbuild)
+   > It will run [`tsdown`](https://tsdown.dev/)
    > to build the final JavaScript action code with all dependencies included.
 
 ### Publishing a New Release

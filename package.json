@@ -1,56 +1,55 @@
 {
-  "name": "@nuxthub/action",
-  "description": "Deploy your Nuxt application to NuxtHub",
-  "author": "NuxtHub",
-  "version": "2.0.0",
-  "license": "Apache-2.0",
-  "homepage": "https://github.com/nuxt-hub/action",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/nuxt-hub/action.git"
-  },
-  "bugs": {
-    "url": "https://github.com/nuxt-hub/action/issues"
-  },
-  "keywords": [
-    "actions",
-    "nuxthub"
-  ],
-  "type": "module",
-  "exports": {
-    ".": "./dist/index.mjs"
-  },
-  "files": [
-    "dist"
-  ],
-  "scripts": {
-    "bundle": "pnpm run lint:fix && pnpm run package",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "local-action": "local-action . src/main.ts .env",
-    "package": "unbuild"
-  },
-  "devDependencies": {
-    "@actions/core": "^1.11.1",
-    "@nuxt/eslint-config": "^1.4.1",
-    "@types/node": "^22.15.21",
-    "eslint": "^9.27.0",
-    "execa": "^9.5.3",
-    "nuxthub": "https://pkg.pr.new/nuxt-hub/cli/nuxthub@56",
-    "ofetch": "^1.4.1",
-    "picocolors": "^1.1.1",
-    "pretty-bytes": "^7.0.0",
-    "ufo": "^1.6.1",
-    "unbuild": "3.5.0"
-  },
-  "engines": {
-    "node": ">=20"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@parcel/watcher",
-      "esbuild",
-      "unrs-resolver"
-    ]
-  }
+	"name": "@nuxthub/action",
+	"description": "Deploy your Nuxt application to NuxtHub",
+	"author": "NuxtHub",
+	"version": "2.0.0",
+	"license": "Apache-2.0",
+	"homepage": "https://github.com/nuxt-hub/action",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nuxt-hub/action.git"
+	},
+	"bugs": {
+		"url": "https://github.com/nuxt-hub/action/issues"
+	},
+	"keywords": ["actions", "nuxthub"],
+	"type": "module",
+	"exports": {
+		".": "./dist/index.mjs"
+	},
+	"files": ["dist"],
+	"scripts": {
+		"bundle": "pnpm run check:fix && pnpm run package",
+		"check": "biome check",
+		"check:fix": "biome check --write",
+		"local-action": "local-action . src/main.ts .env",
+		"package": "tsdown"
+	},
+	"devDependencies": {
+		"@actions/core": "^1.11.1",
+		"@biomejs/biome": "1.9.4",
+		"@types/node": "^22.15.29",
+		"execa": "^9.6.0",
+		"nuxthub": "^0.9.1",
+		"ofetch": "^1.4.1",
+		"picocolors": "^1.1.1",
+		"pretty-bytes": "^7.0.0",
+		"tsdown": "^0.12.7",
+		"ufo": "^1.6.1"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"pnpm": {
+		"onlyBuiltDependencies": [
+			"@biomejs/biome",
+			"@parcel/watcher",
+			"esbuild",
+			"unrs-resolver"
+		],
+		"patchedDependencies": {
+			"npm-run-path@6.0.0": "patches/npm-run-path@6.0.0.patch",
+			"unicorn-magic": "patches/unicorn-magic.patch"
+		}
+	}
 }

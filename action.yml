@@ -25,7 +25,7 @@ inputs:
   build:
     description: 'Set to "true" to build the project before deploying. If "false", the action will skip the build step and deploy the contents of the output directory as-is.'
     required: false
-    default: "false"
+    default: "true"
   build-command:
     description: 'The command to run to build your Nuxt application. Executed in the directory specified in `directory`.'
     required: false
@@ -43,4 +43,4 @@ outputs:
 
 runs:
   using: node20
-  main: dist/index.mjs
+  main: dist/index.js
