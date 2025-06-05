@@ -6,11 +6,14 @@ import * as core from '@actions/core'
 import { getStorage, getPathsToDeploy, getFile, uploadAssetsToCloudflare, uploadWorkersAssetsToCloudflare, isMetaPath, isWorkerMetaPath, isServerPath, isWorkerServerPath, getPublicFiles, getWorkerPublicFiles } from 'nuxthub/internal'
 import { createMigrationsTable, fetchRemoteMigrations, queryDatabase } from './database.js'
 import { join } from 'node:path'
+import { execa, parseCommandString } from 'execa'
 
 export async function run() {
   try {
     const projectKeyInput = core.getInput('project-key')
     const directory = core.getInput('directory')
+    const outputDirectoryInput = core.getInput('output-directory')
+    const outputDirectory = join(directory, outputDirectoryInput)
     const hubUrl = core.getInput('hub-url')
 
     if (projectKeyInput !== undefined) core.debug(`Linked with: \`${projectKeyInput}\``)
@@ -58,14 +61,44 @@ export async function run() {
     const projectKey = projectInfo.projectKey
     core.setSecret(projectInfo.accessToken)
     core.debug(`Retrieved project info ${JSON.stringify(projectInfo)}`)
+    // #endregion
 
-    core.info(`Deploying ${colors.blueBright(projectInfo.projectSlug)} to ${colors.blueBright(projectInfo.environment)} environment...`)
+    // #region Build
+    const shouldBuild = core.getInput('build') === 'true'
+    if (shouldBuild) {
+      core.info(`Building ${colors.blueBright(projectInfo.projectSlug)} for ${colors.blueBright(projectInfo.environment)} environment...`)
+
+      const envVars = await $api<{ key: string; value: string; encrypted: boolean }[]>(
+        `/teams/${projectInfo.teamSlug}/projects/${projectInfo.projectSlug}/${projectInfo.environment}/variables`
+      )
+
+      const buildEnv: Record<string, string> = {}
+      for (const { key, value, encrypted } of envVars) {
+        if (!value) continue
+        const isNuxtPublicEnv = key.startsWith('NUXT_PUBLIC_')
+        if (encrypted && !isNuxtPublicEnv) core.setSecret(value)
+        buildEnv[key] = value
+      }
+
+      const buildCommand = core.getInput('build-command') || 'npm run build'
+      const buildCommandArray = parseCommandString(buildCommand);
+
+      core.debug(`Build command: ${buildCommand}`)
+      core.debug(`Build directory: ${directory}`)
+
+      await execa({
+        cwd: directory,
+        stdio: 'inherit',
+        env: buildEnv,
+      })`${buildCommandArray}`
+    }
     // #endregion
 
     // #region Prepare deployment
-    core.debug(`Processing files in ${directory}...`)
+    core.info(`Deploying ${colors.blueBright(projectInfo.projectSlug)} to ${colors.blueBright(projectInfo.environment)} environment...`)
+    core.debug(`Processing files in ${outputDirectory}...`)
 
-    const storage = await getStorage(directory)
+    const storage = await getStorage(outputDirectory)
     const fileKeys = await storage.getKeys()
     const pathsToDeploy = getPathsToDeploy(fileKeys)
     const config = await storage.getItem('hub.config.json')
@@ -188,7 +221,7 @@ export async function run() {
         .filter(fileKey => fileKey.startsWith('database:migrations:') && fileKey.endsWith('.sql'))
         .map(fileKey => fileKey.replace('database:migrations:', '').replace('.sql', ''))
       if (!localMigrations.length) {
-        core.info(`Skipping database migrations - no database migrations found in ${colors.blueBright(`${directory}/database/migrations`)}`)
+        core.info(`Skipping database migrations - no database migrations found in ${colors.blueBright(`${outputDirectory}/database/migrations`)}`)
         core.info('No pending migrations to apply')
       }
 
@@ -250,7 +283,7 @@ export async function run() {
         .filter(fileKey => fileKey.startsWith('database:queries:') && fileKey.endsWith('.sql'))
         .map(fileKey => fileKey.replace('database:queries:', '').replace('.sql', ''))
       if (!localQueries.length) {
-        core.info(`Skipping database queries - no database queries found in ${colors.blueBright(`${directory}/database/queries`)}`)
+        core.info(`Skipping database queries - no database queries found in ${colors.blueBright(`${outputDirectory}/database/queries`)}`)
       }
 
       if (localQueries.length) {
