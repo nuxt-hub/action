@@ -60,16 +60,12 @@ jobs:
       - name: Create testing app
         run: pnpx nuxi init testing-app -t hub --package-manager pnpm --git-init false
 
-      - name: Build site
-        run: NITRO_PRESET=cloudflare_pages pnpm run build
-        working-directory: ./testing-app
-
       - name: Test local action
         id: test-action
         uses: ./
         with:
           hub-url: ${{ secrets.HUB_URL }}
-          directory: testing-app/dist
+          directory: testing-app
 
       - name: Print output
         id: output
