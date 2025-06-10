@@ -2,7 +2,7 @@
 	"name": "@nuxthub/action",
 	"description": "Deploy your Nuxt application to NuxtHub",
 	"author": "NuxtHub",
-	"version": "2.0.0",
+	"version": "2.0.1",
 	"license": "Apache-2.0",
 	"homepage": "https://github.com/nuxt-hub/action",
 	"repository": {
@@ -14,15 +14,11 @@
 	},
 	"keywords": ["actions", "nuxthub"],
 	"type": "module",
-	"exports": {
-		".": "./dist/index.mjs"
-	},
 	"files": ["dist"],
 	"scripts": {
 		"bundle": "pnpm run check:fix && pnpm run package",
 		"check": "biome check",
 		"check:fix": "biome check --write",
-		"local-action": "local-action . src/main.ts .env",
 		"package": "tsdown"
 	},
 	"devDependencies": {

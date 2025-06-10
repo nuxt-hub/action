@@ -91,7 +91,7 @@ export async function run() {
 				{ key: string; value: string; encrypted: boolean }[]
 			>(
 				`/teams/${projectInfo.teamSlug}/projects/${projectInfo.projectSlug}/${projectInfo.environment}/variables`,
-			);
+			).catch((err) => []);
 
 			const buildEnv: Record<string, string> = {};
 			for (const { key, value, encrypted } of envVars) {
@@ -100,6 +100,9 @@ export async function run() {
 				if (encrypted && !isNuxtPublicEnv) core.setSecret(value);
 				buildEnv[key] = value;
 			}
+
+			buildEnv.REMOTE_PROJECT_TYPE =
+				projectInfo.type === "worker" ? "workers" : "pages";
 
 			const buildCommand = core.getInput("build-command") || "npm run build";
 			const buildCommandArray = parseCommandString(buildCommand);

@@ -83537,7 +83537,7 @@ async function run() {
 		const shouldBuild = import_core.getInput("build") === "true";
 		if (shouldBuild) {
 			import_core.info(`Building ${import_picocolors.default.blueBright(projectInfo.projectSlug)} for ${import_picocolors.default.blueBright(projectInfo.environment)} environment...`);
-			const envVars = await $api$1(`/teams/${projectInfo.teamSlug}/projects/${projectInfo.projectSlug}/${projectInfo.environment}/variables`);
+			const envVars = await $api$1(`/teams/${projectInfo.teamSlug}/projects/${projectInfo.projectSlug}/${projectInfo.environment}/variables`).catch((err) => []);
 			const buildEnv = {};
 			for (const { key, value: value$1, encrypted } of envVars) {
 				if (!value$1) continue;
@@ -83545,6 +83545,7 @@ async function run() {
 				if (encrypted && !isNuxtPublicEnv) import_core.setSecret(value$1);
 				buildEnv[key] = value$1;
 			}
+			buildEnv.REMOTE_PROJECT_TYPE = projectInfo.type === "worker" ? "workers" : "pages";
 			const buildCommand = import_core.getInput("build-command") || "npm run build";
 			const buildCommandArray = parseCommandString(buildCommand);
 			import_core.debug(`Build command: ${buildCommand}`);
