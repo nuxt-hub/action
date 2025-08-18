@@ -6,10 +6,10 @@ settings:
 
 patchedDependencies:
   npm-run-path@6.0.0:
-    hash: 39bfa42e3b4a88466bc7320baa1200f1457c545b16566d6342f5ea6bf7ad57e2
+    hash: xtezywcbqzzw2mymwiicbqq6ze
     path: patches/npm-run-path@6.0.0.patch
   unicorn-magic:
-    hash: 2d4ffaaab79abc5da33d9aa2e4991b1db2e1d4308968af547983a24004f97101
+    hash: d7pivorrs5z2ahygyzmz6vvqq4
     path: patches/unicorn-magic.patch
 
 importers:
@@ -23,8 +23,8 @@ importers:
         specifier: 1.9.4
         version: 1.9.4
       '@types/node':
-        specifier: ^22.15.29
-        version: 22.15.29
+        specifier: ^24.3.0
+        version: 24.3.0
       execa:
         specifier: ^9.6.0
         version: 9.6.0
@@ -359,8 +359,8 @@ packages:
   '@tybys/wasm-util@0.9.0':
     resolution: {integrity: sha512-6+7nlbMVX/PVDCwaIQ8nTOPveOcFLSt8GcXdx8hD0bt39uWxYT88uXzqTd4fTvqta7oeUJqudepapKNt2DYJFw==}
 
-  '@types/node@22.15.29':
-    resolution: {integrity: sha512-LNdjOkUDlU1RZb8e1kOIUpN1qQUlzGkEtbVNo53vbrwDg5om6oduhm4SiUaPW5ASTXhAiP0jInWG8Qx9fVlOeQ==}
+  '@types/node@24.3.0':
+    resolution: {integrity: sha512-aPTXCrfwnDLj4VvXrm+UUCQjNEvJgNA8s5F1cvwQU+3KNltTOkBm1j30uNLyqqPNe7gE3KFzImYoZEfLhp4Yow==}
 
   acorn@8.14.1:
     resolution: {integrity: sha512-OvQ/2pUDKmgfCg++xsTX1wGxfTaszcHVcTctW4UJB4hibJx2HXxxO5UmVgyjMa+ZDsiaf5wWLXYpRWMmBI0QHg==}
@@ -1089,8 +1089,8 @@ packages:
   uncrypto@0.1.3:
     resolution: {integrity: sha512-Ql87qFHB3s/De2ClA9e0gsnS6zXG27SkTiSJwjCc9MebbfapQfuPzumMIUMi38ezPZVNFcHI9sUIepeQfw8J8Q==}
 
-  undici-types@6.21.0:
-    resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
+  undici-types@7.10.0:
+    resolution: {integrity: sha512-t5Fy/nfn+14LuOc2KNYg75vZqClpAiqscVvMygNnlsHBFpSXdJaYtXMcdNLpl/Qvc3P2cB3s6lOV51nqsFq4ag==}
 
   undici@5.29.0:
     resolution: {integrity: sha512-raqeBD6NQK4SkWhQzeYKd1KmIG6dllBOTt55Rmkt4HtI9mwdWtJljnrXjAFUBLTSN67HWrOIZ3EPF4kjUw80Bg==}
@@ -1467,9 +1467,9 @@ snapshots:
       tslib: 2.8.1
     optional: true
 
-  '@types/node@22.15.29':
+  '@types/node@24.3.0':
     dependencies:
-      undici-types: 6.21.0
+      undici-types: 7.10.0
 
   acorn@8.14.1: {}
 
@@ -1660,7 +1660,7 @@ snapshots:
       human-signals: 8.0.1
       is-plain-obj: 4.1.0
       is-stream: 4.0.1
-      npm-run-path: 6.0.0(patch_hash=39bfa42e3b4a88466bc7320baa1200f1457c545b16566d6342f5ea6bf7ad57e2)
+      npm-run-path: 6.0.0(patch_hash=xtezywcbqzzw2mymwiicbqq6ze)
       pretty-ms: 9.2.0
       signal-exit: 4.1.0
       strip-final-newline: 4.0.0
@@ -1869,10 +1869,10 @@ snapshots:
     dependencies:
       path-key: 4.0.0
 
-  npm-run-path@6.0.0(patch_hash=39bfa42e3b4a88466bc7320baa1200f1457c545b16566d6342f5ea6bf7ad57e2):
+  npm-run-path@6.0.0(patch_hash=xtezywcbqzzw2mymwiicbqq6ze):
     dependencies:
       path-key: 4.0.0
-      unicorn-magic: 0.3.0(patch_hash=2d4ffaaab79abc5da33d9aa2e4991b1db2e1d4308968af547983a24004f97101)
+      unicorn-magic: 0.3.0(patch_hash=d7pivorrs5z2ahygyzmz6vvqq4)
 
   nuxthub@0.9.1:
     dependencies:
@@ -2195,13 +2195,13 @@ snapshots:
 
   uncrypto@0.1.3: {}
 
-  undici-types@6.21.0: {}
+  undici-types@7.10.0: {}
 
   undici@5.29.0:
     dependencies:
       '@fastify/busboy': 2.1.1
 
-  unicorn-magic@0.3.0(patch_hash=2d4ffaaab79abc5da33d9aa2e4991b1db2e1d4308968af547983a24004f97101): {}
+  unicorn-magic@0.3.0(patch_hash=d7pivorrs5z2ahygyzmz6vvqq4): {}
 
   unstorage@1.15.0:
     dependencies:
